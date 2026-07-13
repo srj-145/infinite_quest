@@ -1017,6 +1017,101 @@ export default function InfiniteQuest() {
     }
   };
 
+  const getNpcTransmission = () => {
+    if (!selectedSetting) return null;
+    
+    const isBossActive = currentChoices.length > 0 && BOSS_POOL[selectedSetting]?.actions.some(a => a.text === currentChoices[0].text);
+    
+    if (selectedSetting === "🌌 Neon Core") {
+      const npcName = "Dexter 'Vandal' Vance";
+      const avatar = "😎";
+      let message = "Keep pushing forward, Nomad. The corporate network is thick here.";
+      
+      if (isBossActive) {
+        message = score < 6 
+          ? "Heads up! That's the T-800 Overlord Combat Mech! Overload its mainframe core or hack its weapon arrays!" 
+          : "Sterling is uploading his consciousness into the central AI mainframe! Override the emergency breakers, quick!";
+      } else {
+        const milestones: Record<number, string> = {
+          0: "Alright Nomad, we've breached the corporate gate. Stay low and hack past the security grids.",
+          1: "Drones are scanning the streets. Keep moving, search the lockers for spare gold credits.",
+          2: "Check your Matrix Shop terminal tab. If you have enough gold, buy a better weapon or armor piece.",
+          3: "We're approaching the mainframe elevator. Main security forces are shifting to cut us off.",
+          4: "Warning! A heavy military combat mech signature is powering up in the server vault ahead.",
+          6: "Overlord neutralized! Excellent work. We've descended to Floor 2 - the lower quantum database grids.",
+          7: "The digital grid is unstable here. Look out for anomalous core anomalies or rifts.",
+          8: "We are bypassing Director Sterling's outer corporate firewalls. Grid defenses are maxing out.",
+          9: "The central core is right ahead. Sterling's consciousness is uploading. Spend your gold and brace yourself!",
+          10: "Sterling's systems are offline, but his mainframe backup is booting. Stand ready!",
+          11: "System purged! The mainframe is ours. Let's download the assets and jack out of the matrix."
+        };
+        if (score in milestones) message = milestones[score];
+        else if (score > 11) message = "Secure the clean data packets. The system is fully bypassed. Excellent run, partner!";
+      }
+      return { npcName, avatar, message };
+    }
+    
+    if (selectedSetting === "🏰 Eldoria") {
+      const npcName = "Lady Lyra the Sentinel";
+      const avatar = "👻";
+      let message = "Tread carefully, mortal. The shadow curse runs deep in these stones.";
+      
+      if (isBossActive) {
+        message = score < 6 
+          ? "The Shadow Sentinel blocks the doorway! Shatter its obsidian shield, or be swept into the darkness!" 
+          : "Valthor the Shadow Dragon rises! Use the magical ley lines to dispel its ash breath, or perish!";
+      } else {
+        const milestones: Record<number, string> = {
+          0: "Mortal... thou hast crossed the obsidian threshold. The dragon's shadow corrupts this sanctuary.",
+          1: "Skeletal sentries patrol the catacombs. Walk softly, or face their rusted blades.",
+          2: "Visit the Matrix Merchant in the ruins. Purchase armor or Vitality Elixirs to heal thy wounds.",
+          3: "The magical runes grow brighter. We approach the gates of the Arch-Mages.",
+          4: "A dark presence blocks the chamber. Prepare yourself for the Shadow Sentinel.",
+          6: "The Sentinel lies shattered. We enter Floor 2 - the deep crystal cavern voids.",
+          7: "Beware the cosmic rift tears. They offer ancient powers to those who survive their trials.",
+          8: "Valthor's shadow flame burns ahead. The sanctuary's core is close.",
+          9: "The Shadow Dragon stirs. Upgrade thy stats and steel thy sword, hero!",
+          10: "The dragon's heart is exposed, but its flame is fiercely burning. Strike fast!",
+          11: "The dragon is banished! Light returns to Eldoria. Take thy treasures and rest."
+        };
+        if (score in milestones) message = milestones[score];
+        else if (score > 11) message = "The evil is vanquished. Go forth with honor and carry the light of Eldoria.";
+      }
+      return { npcName, avatar, message };
+    }
+    
+    if (selectedSetting === "☄️ Sector-9") {
+      const npcName = "A.N.D.I. AI Core";
+      const avatar = "🤖";
+      let message = "BZZT... Scanning sector for signs of organic life forms. High threat levels detected.";
+      
+      if (isBossActive) {
+        message = score < 6 
+          ? "Warning: Organic index exceeds safety parameters. Dread-Xenomorph target locked. Aim for the coolant vents." 
+          : "Reactor core synapse linked. Sentient Hive-Brain detected. Execute database command purge immediately!";
+      } else {
+        const milestones: Record<number, string> = {
+          0: "BZZT... Warning. Station Sector-9 quarantine active. Extraterrestrial signatures detected.",
+          1: "Airlocks are venting pressure. Watch for xenomorph activity in the service vents.",
+          2: "Reminder: Matrix Shop terminals are active. Spend credits on weaponry or mutagen belt injections.",
+          3: "Approaching command bridge elevator. Gravity generators are fluctuating.",
+          4: "Warning: Organic mass index exceeds safety levels. Hostile Dread-Xenomorph ahead.",
+          6: "Dread-Xenomorph cleared. Descending to Floor 2 - the automated nuclear reactor decks.",
+          7: "Reactor coolant lines are leaking. Watch out for anomalous energy discharges.",
+          8: "Sentient Hive-Brain signals detected. Overriding security gates now.",
+          9: "Primary reactor core critical. Hive-Brain is initiating purge. Maximize defense protocols!",
+          10: "Hive core synapse is disrupted, but warning systems remain red. Complete the purge!",
+          11: "Reactor secure. Hive-Brain purged. Station parameters restored. Mission successful."
+        };
+        if (score in milestones) message = milestones[score];
+        else if (score > 11) message = "All systems green. Station quarantine lifted. Returning piloting control to crew.";
+      }
+      return { npcName, avatar, message };
+    }
+    
+    return null;
+  };
+
   const renderStoryGraphic = () => {
     if (!selectedSetting) return null;
     
@@ -1541,6 +1636,26 @@ export default function InfiniteQuest() {
                   
                   {/* Story text display */}
                   <div className="p-6 flex-1 flex flex-col justify-start overflow-y-auto">
+                    {/* NPC Radio Transmission */}
+                    {(() => {
+                      const transmission = getNpcTransmission();
+                      if (!transmission) return null;
+                      return (
+                        <div className="mb-4 p-3 bg-purple-950/20 border border-purple-900/40 rounded-lg flex gap-3 items-start animate-pulse">
+                          <div className="w-9 h-9 rounded-lg border border-purple-800 bg-slate-950 flex items-center justify-center text-base shadow-inner shrink-0">
+                            {transmission.avatar}
+                          </div>
+                          <div className="flex-1 font-mono text-[10px] leading-relaxed">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-purple-400 font-bold uppercase tracking-wider">{transmission.npcName} // COMMS</span>
+                              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest animate-ping">●</span>
+                            </div>
+                            <p className="text-slate-300 italic text-[11px] leading-relaxed">"{transmission.message}"</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <span className="text-[10px] uppercase bg-slate-950 border border-slate-800 px-2 py-0.5 rounded text-slate-500 w-fit mb-4 tracking-wider font-mono">
                       CURRENT CHRONICLE NODE // {selectedSetting.toUpperCase()}
                     </span>
