@@ -330,7 +330,7 @@ export default function InfiniteQuest() {
   const [pointsLeft, setPointsLeft] = useState<number>(10);
   const [selectedSetting, setSelectedSetting] = useState<keyof typeof NARRATIVE_POOLS | "">('');
   const [score, setScore] = useState<number>(0);
-  
+
   const [char, setChar] = useState<Character>({
     name: '',
     class: 'Tech Nomad',
@@ -344,7 +344,7 @@ export default function InfiniteQuest() {
   const [currentChoices, setCurrentChoices] = useState<Choice[]>([]);
   const [earnedPoints, setEarnedPoints] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  
+
   // RPG System States
   const [tab, setTab] = useState<'story' | 'shop'>('story');
   const [gold, setGold] = useState<number>(100);
@@ -382,7 +382,7 @@ export default function InfiniteQuest() {
   const consumePotion = (potionId: string) => {
     const potion = potions.find(p => p.id === potionId);
     if (!potion) return;
-    
+
     let resolutionText = "";
     if (potion.type === 'health') {
       const heal = 35;
@@ -430,7 +430,7 @@ export default function InfiniteQuest() {
       { grade: 'A', weight: 4 },
       { grade: 'S', weight: 2 }
     ];
-    
+
     const rollGrade = (): EquipmentItem['grade'] => {
       const rand = Math.random() * 100;
       let sum = 0;
@@ -489,12 +489,12 @@ export default function InfiniteQuest() {
       const grade = rollGrade();
       const names = itemNames[slot][grade];
       const name = names[Math.floor(Math.random() * names.length)];
-      
+
       let strength = 0, agility = 0, intelligence = 0;
       const boostVal = { E: 1, D: 2, C: 4, B: 6, A: 9, S: 15 }[grade];
       const stats: Array<'strength' | 'agility' | 'intelligence'> = ['strength', 'agility', 'intelligence'];
       const primaryStat = stats[Math.floor(Math.random() * stats.length)];
-      
+
       if (primaryStat === 'strength') strength = boostVal;
       if (primaryStat === 'agility') agility = boostVal;
       if (primaryStat === 'intelligence') intelligence = boostVal;
@@ -539,20 +539,20 @@ export default function InfiniteQuest() {
     setShopItems(generateShopItems());
     setPotions([]);
     setTab('story');
-    
+
     const pool = NARRATIVE_POOLS[settingName];
     const initialLocation = pool.locations[0];
     const initialHazard = pool.hazards[0];
     const initialText = `The chronicle of ${char.name} the ${char.class} begins inside ${initialLocation}. Suddenly, ${initialHazard}! What is your immediate course of action?`;
-    
+
     setStoryText(initialText);
-    
+
     // Grab initial choices and interpolate situation details with varied weights
     const initialChoices = [...pool.actions].sort(() => 0.5 - Math.random()).slice(0, 3).map(action => {
       const text = action.text
         .replace("{location}", initialLocation)
         .replace("{hazard}", initialHazard);
-      
+
       const rand = Math.random();
       let difficultyBonus = 0;
       let rewardMult = 1.0;
@@ -563,11 +563,11 @@ export default function InfiniteQuest() {
         difficultyBonus = 4;
         rewardMult = 2.0;
       }
-      
+
       const scaledDiff = Math.max(5, Math.floor(action.difficulty + difficultyBonus));
       return { ...action, text, difficulty: scaledDiff, rewardMult };
     }) as Choice[];
-    
+
     setCurrentChoices(initialChoices);
     setView('game');
   };
@@ -575,11 +575,11 @@ export default function InfiniteQuest() {
   const handleEventAction = (choice: Choice) => {
     if (!selectedSetting || isTransitioning) return;
     setIsTransitioning(true);
-    
+
     setTimeout(() => {
       executeEventActionLogic(choice);
     }, 425);
-    
+
     setTimeout(() => {
       setIsTransitioning(false);
     }, 850);
@@ -588,16 +588,16 @@ export default function InfiniteQuest() {
   const executeEventActionLogic = (choice: Choice) => {
     if (!selectedSetting) return;
     const pool = NARRATIVE_POOLS[selectedSetting];
-    
+
     let playerStatValue = 10;
     if (choice.statType !== 'general') {
       playerStatValue = getStat(choice.statType);
     }
-    
+
     const diceRoll = Math.floor(Math.random() * 6) + 1;
     const totalRoll = playerStatValue + diceRoll;
     const isSuccess = totalRoll >= choice.difficulty;
-    
+
     let resolutionText = "";
     let healthChange = 0;
     let goldChange = 0;
@@ -605,7 +605,7 @@ export default function InfiniteQuest() {
     let equipmentEarned: EquipmentItem | null = null;
     let potionEarned: Potion | null = null;
 
-    switch(choice.eventType) {
+    switch (choice.eventType) {
       case "datacore_siphon":
         if (isSuccess) {
           healthChange = 25;
@@ -628,7 +628,7 @@ export default function InfiniteQuest() {
       case "datacore_ignore":
         resolutionText = `You bypass the Datacore safely, leaving its secrets intact.`;
         break;
-        
+
       case "merchant_hack":
         if (isSuccess) {
           goldChange = 80;
@@ -674,7 +674,7 @@ export default function InfiniteQuest() {
           resolutionText = `[FAILURE] The drone dodges your smash and zaps you before self-destructing (-10 Vitality).`;
         }
         break;
-        
+
       case "rift_leap":
         if (isSuccess) {
           pointChange = 3;
@@ -698,7 +698,7 @@ export default function InfiniteQuest() {
       case "rift_ignore":
         resolutionText = `You step back and let the tear collapse into space.`;
         break;
-        
+
       default:
         resolutionText = `The anomaly fades back into the background grid.`;
         break;
@@ -706,7 +706,7 @@ export default function InfiniteQuest() {
 
     if (goldChange !== 0) setGold(prev => Math.max(0, prev + goldChange));
     if (pointChange > 0) setEarnedPoints(prev => prev + pointChange);
-    
+
     let currentHealth = char.health;
     if (healthChange > 0) {
       currentHealth = Math.min(100, char.health + healthChange);
@@ -753,7 +753,7 @@ export default function InfiniteQuest() {
       const text = action.text
         .replace("{location}", nextLocation)
         .replace("{hazard}", nextHazard);
-      
+
       const rand = Math.random();
       let difficultyBonus = 0;
       let rewardMult = 1.0;
@@ -764,11 +764,11 @@ export default function InfiniteQuest() {
         difficultyBonus = 4;
         rewardMult = 2.0;
       }
-      
+
       const scaledDiff = Math.max(5, Math.floor(action.difficulty + score / 3 + difficultyBonus));
       return { ...action, text, difficulty: scaledDiff, rewardMult };
     }) as Choice[];
-    
+
     let choices = regularChoices.sort(() => 0.5 - Math.random()).slice(0, 3);
     const shouldOfferRest = currentHealth < 40 || (currentHealth < 70 && Math.random() < 0.4);
     if (shouldOfferRest) {
@@ -785,17 +785,17 @@ export default function InfiniteQuest() {
 
   const handleAction = (choice: Choice) => {
     if (!selectedSetting || isTransitioning) return;
-    
+
     if (choice.eventType) {
       handleEventAction(choice);
       return;
     }
-    
+
     setIsTransitioning(true);
     setTimeout(() => {
       executeActionLogic(choice);
     }, 425);
-    
+
     setTimeout(() => {
       setIsTransitioning(false);
     }, 850);
@@ -804,27 +804,27 @@ export default function InfiniteQuest() {
   const executeActionLogic = (choice: Choice) => {
     if (!selectedSetting) return;
     const pool = NARRATIVE_POOLS[selectedSetting];
-    
+
     if (choice.eventType) {
       handleEventAction(choice);
       return;
     }
-    
+
     // Check if this is a rest choice
     if (choice.statType === 'rest') {
       const healAmount = Math.floor(Math.random() * 15) + 15; // 15-30 healing
       const newHealth = Math.min(100, char.health + healAmount);
       setChar(prev => ({ ...prev, health: newHealth }));
-      
+
       const resolutionText = `[REST] You chose to: "${choice.text}". You set up a secure camp and restore ${healAmount} Vitality points. (Health is now ${newHealth}/100).`;
-      
+
       // Restock shop
       setShopItems(generateShopItems());
-      
+
       // Check if next room is a Boss room (every 5 rooms) or Anomaly Event (25% chance)
       const isNextBoss = (score > 0 && score % 5 === 0);
       const triggerEvent = !isNextBoss && Math.random() < 0.25;
-      
+
       if (isNextBoss) {
         const boss = BOSS_POOL[selectedSetting];
         const bossText = `\n\n🚨 BOSS ENCOUNTER! 🚨\nYou enter a new area. ${boss.intro}`;
@@ -839,13 +839,13 @@ export default function InfiniteQuest() {
         const nextHazard = pool.hazards[Math.floor(Math.random() * pool.hazards.length)];
         const nextChapterText = `\n\nMoving forward, you navigate deeper into ${nextLocation}. Before you can catch your breath, ${nextHazard}!`;
         setStoryText(resolutionText + nextChapterText);
-        
+
         // Interpolate situation details & varied weights
         const regularChoices = [...pool.actions].map(action => {
           const text = action.text
             .replace("{location}", nextLocation)
             .replace("{hazard}", nextHazard);
-          
+
           const rand = Math.random();
           let difficultyBonus = 0;
           let rewardMult = 1.0;
@@ -856,11 +856,11 @@ export default function InfiniteQuest() {
             difficultyBonus = 4;
             rewardMult = 2.0;
           }
-          
+
           const scaledDiff = Math.max(5, Math.floor(action.difficulty + score / 3 + difficultyBonus));
           return { ...action, text, difficulty: scaledDiff, rewardMult };
         }) as Choice[];
-        
+
         let choices = regularChoices.sort(() => 0.5 - Math.random()).slice(0, 3);
         const shouldOfferRest = newHealth < 40 || (newHealth < 70 && Math.random() < 0.4);
         if (shouldOfferRest) {
@@ -875,13 +875,13 @@ export default function InfiniteQuest() {
       }
       return;
     }
-    
+
     // Calculate Stat Check Success
     let playerStatValue = 10; // Default general challenge modifier
     if (choice.statType !== 'general') {
       playerStatValue = getStat(choice.statType);
     }
-    
+
     // Add a small local random dice roll (1 to 6) to mimic a true tabletop RPG challenge
     const diceRoll = Math.floor(Math.random() * 6) + 1;
     const totalRoll = playerStatValue + diceRoll;
@@ -889,14 +889,14 @@ export default function InfiniteQuest() {
 
     let resolutionText = "";
     let healthDamage = 0;
-    
+
     const isBossChoice = BOSS_POOL[selectedSetting].actions.some(a => a.text === choice.text);
     let nextScore = score;
 
     if (isSuccess) {
       nextScore = score + 1;
       setScore(nextScore);
-      
+
       let rewardText = "";
       let goldGain = 0;
       if (isBossChoice) {
@@ -912,7 +912,7 @@ export default function InfiniteQuest() {
         const mult = choice.rewardMult || 1.0;
         goldGain = Math.floor(baseGold * mult);
         setGold(prev => prev + goldGain);
-        
+
         let extraText = "";
         if (mult > 1.5 && Math.random() < 0.15 && potions.length < 3) {
           const potTypes = [
@@ -966,7 +966,7 @@ export default function InfiniteQuest() {
     // Check if next room should be a Boss room (every 5 rooms) or Anomaly Event (25% chance)
     const isNextBoss = (nextScore > 0 && nextScore % 5 === 0);
     const triggerEvent = !isNextBoss && Math.random() < 0.25;
-    
+
     if (isNextBoss) {
       const boss = BOSS_POOL[selectedSetting];
       const bossText = `\n\n🚨 BOSS ENCOUNTER! 🚨\nYou enter a new area. ${boss.intro}`;
@@ -987,7 +987,7 @@ export default function InfiniteQuest() {
         const text = action.text
           .replace("{location}", nextLocation)
           .replace("{hazard}", nextHazard);
-        
+
         const rand = Math.random();
         let difficultyBonus = 0;
         let rewardMult = 1.0;
@@ -998,11 +998,11 @@ export default function InfiniteQuest() {
           difficultyBonus = 4;
           rewardMult = 2.0;
         }
-        
+
         const scaledDiff = Math.max(5, Math.floor(action.difficulty + score / 3 + difficultyBonus));
         return { ...action, text, difficulty: scaledDiff, rewardMult };
       }) as Choice[];
-      
+
       let choices = regularChoices.sort(() => 0.5 - Math.random()).slice(0, 3);
       const shouldOfferRest = currentHealth < 40 || (currentHealth < 70 && Math.random() < 0.4);
       if (shouldOfferRest) {
@@ -1019,17 +1019,17 @@ export default function InfiniteQuest() {
 
   const getNpcTransmission = () => {
     if (!selectedSetting) return null;
-    
+
     const isBossActive = currentChoices.length > 0 && BOSS_POOL[selectedSetting]?.actions.some(a => a.text === currentChoices[0].text);
-    
+
     if (selectedSetting === "🌌 Neon Core") {
       const npcName = "Dexter 'Vandal' Vance";
       const avatar = "😎";
       let message = "Keep pushing forward, Nomad. The corporate network is thick here.";
-      
+
       if (isBossActive) {
-        message = score < 6 
-          ? "Heads up! That's the T-800 Overlord Combat Mech! Overload its mainframe core or hack its weapon arrays!" 
+        message = score < 6
+          ? "Heads up! That's the T-800 Overlord Combat Mech! Overload its mainframe core or hack its weapon arrays!"
           : "Sterling is uploading his consciousness into the central AI mainframe! Override the emergency breakers, quick!";
       } else {
         const milestones: Record<number, string> = {
@@ -1050,15 +1050,15 @@ export default function InfiniteQuest() {
       }
       return { npcName, avatar, message };
     }
-    
+
     if (selectedSetting === "🏰 Eldoria") {
       const npcName = "Lady Lyra the Sentinel";
       const avatar = "👻";
       let message = "Tread carefully, mortal. The shadow curse runs deep in these stones.";
-      
+
       if (isBossActive) {
-        message = score < 6 
-          ? "The Shadow Sentinel blocks the doorway! Shatter its obsidian shield, or be swept into the darkness!" 
+        message = score < 6
+          ? "The Shadow Sentinel blocks the doorway! Shatter its obsidian shield, or be swept into the darkness!"
           : "Valthor the Shadow Dragon rises! Use the magical ley lines to dispel its ash breath, or perish!";
       } else {
         const milestones: Record<number, string> = {
@@ -1079,15 +1079,15 @@ export default function InfiniteQuest() {
       }
       return { npcName, avatar, message };
     }
-    
+
     if (selectedSetting === "☄️ Sector-9") {
       const npcName = "A.N.D.I. AI Core";
       const avatar = "🤖";
       let message = "BZZT... Scanning sector for signs of organic life forms. High threat levels detected.";
-      
+
       if (isBossActive) {
-        message = score < 6 
-          ? "Warning: Organic index exceeds safety parameters. Dread-Xenomorph target locked. Aim for the coolant vents." 
+        message = score < 6
+          ? "Warning: Organic index exceeds safety parameters. Dread-Xenomorph target locked. Aim for the coolant vents."
           : "Reactor core synapse linked. Sentient Hive-Brain detected. Execute database command purge immediately!";
       } else {
         const milestones: Record<number, string> = {
@@ -1108,28 +1108,28 @@ export default function InfiniteQuest() {
       }
       return { npcName, avatar, message };
     }
-    
+
     return null;
   };
 
   const renderStoryGraphic = () => {
     if (!selectedSetting) return null;
-    
+
     const isGameOver = currentChoices.length === 0;
     const isBossActive = currentChoices.length > 0 && BOSS_POOL[selectedSetting]?.actions.some(a => a.text === currentChoices[0].text);
     const isRestingActive = currentChoices.length > 0 && currentChoices.some(c => c.statType === 'rest');
     const floor = score + 1;
-    
+
     if (isGameOver) {
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#020617"/>
-          <path d="M 0 40 L 400 40 M 0 80 L 400 80 M 0 120 L 400 120 M 100 0 L 100 160 M 200 0 L 200 160 M 300 0 L 300 160" stroke="#1e293b" strokeWidth="0.5"/>
-          <path d="M 180 50 L 220 50 L 230 70 L 230 90 L 210 110 L 210 120 L 190 120 L 190 110 L 170 90 L 170 70 Z" fill="#ef4444" fillOpacity="0.15" stroke="#ef4444" strokeWidth="2" strokeDasharray="4 4"/>
-          <circle cx="190" cy="75" r="4" fill="#ef4444"/>
-          <circle cx="210" cy="75" r="4" fill="#ef4444"/>
-          <path d="M 195 95 L 205 95" stroke="#ef4444" strokeWidth="2"/>
-          <line x1="0" y1="0" x2="400" y2="0" stroke="#ef4444" strokeWidth="1.5" opacity="0.4" style={{ animation: 'scanline 3s linear infinite' }}/>
+          <rect width="400" height="160" fill="#020617" />
+          <path d="M 0 40 L 400 40 M 0 80 L 400 80 M 0 120 L 400 120 M 100 0 L 100 160 M 200 0 L 200 160 M 300 0 L 300 160" stroke="#1e293b" strokeWidth="0.5" />
+          <path d="M 180 50 L 220 50 L 230 70 L 230 90 L 210 110 L 210 120 L 190 120 L 190 110 L 170 90 L 170 70 Z" fill="#ef4444" fillOpacity="0.15" stroke="#ef4444" strokeWidth="2" strokeDasharray="4 4" />
+          <circle cx="190" cy="75" r="4" fill="#ef4444" />
+          <circle cx="210" cy="75" r="4" fill="#ef4444" />
+          <path d="M 195 95 L 205 95" stroke="#ef4444" strokeWidth="2" />
+          <line x1="0" y1="0" x2="400" y2="0" stroke="#ef4444" strokeWidth="1.5" opacity="0.4" style={{ animation: 'scanline 3s linear infinite' }} />
           <text x="50%" y="145" textAnchor="middle" fill="#ef4444" fontSize="10" fontFamily="monospace" letterSpacing="2">💀 SIMULATION CRITICAL FAILURE 💀</text>
           <style>{`
             @keyframes scanline {
@@ -1140,16 +1140,16 @@ export default function InfiniteQuest() {
         </svg>
       );
     }
-    
+
     if (isBossActive) {
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#09050d"/>
-          <path d="M 0 20 L 400 20 M 0 60 L 400 60 M 0 100 L 400 100 M 0 140 L 400 140 M 50 0 L 50 160 M 150 0 L 150 160 M 250 0 L 250 160 M 350 0 L 350 160" stroke="#ef4444" strokeWidth="0.5" opacity="0.2"/>
-          <circle cx="200" cy="75" r="35" stroke="#ef4444" strokeWidth="2" strokeDasharray="10 5" style={{ animation: 'rotate 6s linear infinite' }}/>
-          <circle cx="200" cy="75" r="10" fill="#ef4444" opacity="0.3"/>
-          <path d="M 200 25 L 200 45 M 200 105 L 200 125 M 150 75 L 170 75 M 230 75 L 250 75" stroke="#ef4444" strokeWidth="2"/>
-          <rect x="0" y="115" width="400" height="20" fill="#ef4444" fillOpacity="0.2"/>
+          <rect width="400" height="160" fill="#09050d" />
+          <path d="M 0 20 L 400 20 M 0 60 L 400 60 M 0 100 L 400 100 M 0 140 L 400 140 M 50 0 L 50 160 M 150 0 L 150 160 M 250 0 L 250 160 M 350 0 L 350 160" stroke="#ef4444" strokeWidth="0.5" opacity="0.2" />
+          <circle cx="200" cy="75" r="35" stroke="#ef4444" strokeWidth="2" strokeDasharray="10 5" style={{ animation: 'rotate 6s linear infinite' }} />
+          <circle cx="200" cy="75" r="10" fill="#ef4444" opacity="0.3" />
+          <path d="M 200 25 L 200 45 M 200 105 L 200 125 M 150 75 L 170 75 M 230 75 L 250 75" stroke="#ef4444" strokeWidth="2" />
+          <rect x="0" y="115" width="400" height="20" fill="#ef4444" fillOpacity="0.2" />
           <text x="50%" y="129" textAnchor="middle" fill="#f87171" fontSize="9" fontFamily="monospace" fontWeight="bold" letterSpacing="4" style={{ animation: 'pulseWarning 1.5s infinite' }}>⚠️ WARNING: BOSS SIGNATURE DETECTED ⚠️</text>
           <style>{`
             @keyframes rotate {
@@ -1164,19 +1164,19 @@ export default function InfiniteQuest() {
         </svg>
       );
     }
-    
+
     if (isRestingActive) {
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#02140c"/>
-          <circle cx="40" cy="50" r="1" fill="#fff" opacity="0.5"/>
-          <circle cx="150" cy="20" r="1.5" fill="#fff" opacity="0.8"/>
-          <circle cx="280" cy="40" r="1" fill="#fff" opacity="0.6"/>
-          <circle cx="320" cy="25" r="1.2" fill="#fff" opacity="0.7"/>
-          <path d="M 180 110 L 220 95 M 180 95 L 220 110" stroke="#78350f" strokeWidth="6" strokeLinecap="round"/>
-          <path d="M 200 60 C 215 80 205 100 200 100 C 195 100 185 80 200 60 Z" fill="#ea580c" style={{ animation: 'flicker 1.2s infinite' }}/>
-          <path d="M 200 70 C 208 85 203 95 200 95 C 197 95 192 85 200 70 Z" fill="#eab308" style={{ animation: 'flicker 0.8s infinite' }}/>
-          <circle cx="200" cy="90" r="50" stroke="#10b981" strokeWidth="1" strokeDasharray="3 6" opacity="0.4" style={{ animation: 'pulseAura 3s infinite' }}/>
+          <rect width="400" height="160" fill="#02140c" />
+          <circle cx="40" cy="50" r="1" fill="#fff" opacity="0.5" />
+          <circle cx="150" cy="20" r="1.5" fill="#fff" opacity="0.8" />
+          <circle cx="280" cy="40" r="1" fill="#fff" opacity="0.6" />
+          <circle cx="320" cy="25" r="1.2" fill="#fff" opacity="0.7" />
+          <path d="M 180 110 L 220 95 M 180 95 L 220 110" stroke="#78350f" strokeWidth="6" strokeLinecap="round" />
+          <path d="M 200 60 C 215 80 205 100 200 100 C 195 100 185 80 200 60 Z" fill="#ea580c" style={{ animation: 'flicker 1.2s infinite' }} />
+          <path d="M 200 70 C 208 85 203 95 200 95 C 197 95 192 85 200 70 Z" fill="#eab308" style={{ animation: 'flicker 0.8s infinite' }} />
+          <circle cx="200" cy="90" r="50" stroke="#10b981" strokeWidth="1" strokeDasharray="3 6" opacity="0.4" style={{ animation: 'pulseAura 3s infinite' }} />
           <text x="50%" y="145" textAnchor="middle" fill="#34d399" fontSize="10" fontFamily="monospace" letterSpacing="1">SECURE CAMP: VITALITY RESTORATION FIELD ACTIVE</text>
           <style>{`
             @keyframes flicker {
@@ -1193,7 +1193,7 @@ export default function InfiniteQuest() {
         </svg>
       );
     }
-    
+
     if (selectedSetting === "🌌 Neon Core") {
       const neonColor1 = floor <= 3 ? "#06b6d4" : floor <= 6 ? "#10b981" : "#ef4444";
       const neonColor2 = floor <= 3 ? "#3b82f6" : floor <= 6 ? "#f59e0b" : "#ec4899";
@@ -1202,17 +1202,17 @@ export default function InfiniteQuest() {
 
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#030712"/>
-          <path d="M 0 100 L 400 100 M 0 120 L 400 120 M 0 140 L 400 140" stroke={strokeLines} strokeWidth="1"/>
-          <path d="M 200 80 L -100 160 M 200 80 L 0 160 M 200 80 L 100 160 M 200 80 L 200 160 M 200 80 L 300 160 M 200 80 L 400 160 M 200 80 L 500 160" stroke={strokeLines} strokeWidth="1"/>
-          <rect x="30" y="40" width="40" height="80" fill={cityBgColor} stroke={neonColor2} strokeWidth="0.5" opacity="0.8"/>
-          <rect x="90" y="20" width="50" height="100" fill={cityBgColor} stroke={neonColor1} strokeWidth="0.5" opacity="0.8"/>
-          <rect x="260" y="30" width="45" height="90" fill={cityBgColor} stroke={neonColor2} strokeWidth="0.5" opacity="0.8"/>
-          <rect x="320" y="50" width="50" height="70" fill={cityBgColor} stroke={neonColor1} strokeWidth="0.5" opacity="0.8"/>
-          <path d="M 10 150 L 50 150 L 70 130 L 120 130" stroke={neonColor1} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2s infinite' }}/>
-          <circle cx="120" cy="130" r="3" fill={neonColor1} opacity="0.8"/>
-          <path d="M 390 150 L 350 150 L 330 130 L 300 130" stroke={neonColor2} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2.5s infinite' }}/>
-          <circle cx="300" cy="130" r="3" fill={neonColor2} opacity="0.8"/>
+          <rect width="400" height="160" fill="#030712" />
+          <path d="M 0 100 L 400 100 M 0 120 L 400 120 M 0 140 L 400 140" stroke={strokeLines} strokeWidth="1" />
+          <path d="M 200 80 L -100 160 M 200 80 L 0 160 M 200 80 L 100 160 M 200 80 L 200 160 M 200 80 L 300 160 M 200 80 L 400 160 M 200 80 L 500 160" stroke={strokeLines} strokeWidth="1" />
+          <rect x="30" y="40" width="40" height="80" fill={cityBgColor} stroke={neonColor2} strokeWidth="0.5" opacity="0.8" />
+          <rect x="90" y="20" width="50" height="100" fill={cityBgColor} stroke={neonColor1} strokeWidth="0.5" opacity="0.8" />
+          <rect x="260" y="30" width="45" height="90" fill={cityBgColor} stroke={neonColor2} strokeWidth="0.5" opacity="0.8" />
+          <rect x="320" y="50" width="50" height="70" fill={cityBgColor} stroke={neonColor1} strokeWidth="0.5" opacity="0.8" />
+          <path d="M 10 150 L 50 150 L 70 130 L 120 130" stroke={neonColor1} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2s infinite' }} />
+          <circle cx="120" cy="130" r="3" fill={neonColor1} opacity="0.8" />
+          <path d="M 390 150 L 350 150 L 330 130 L 300 130" stroke={neonColor2} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2.5s infinite' }} />
+          <circle cx="300" cy="130" r="3" fill={neonColor2} opacity="0.8" />
           <text x="345" y="20" fill="#94a3b8" fontSize="8" fontFamily="monospace" fontWeight="bold" opacity="0.7">FLR // 0{floor}</text>
           <style>{`
             @keyframes pulseNeon {
@@ -1223,7 +1223,7 @@ export default function InfiniteQuest() {
         </svg>
       );
     }
-    
+
     if (selectedSetting === "🏰 Eldoria") {
       const runeColor = floor <= 3 ? "#d97706" : floor <= 6 ? "#38bdf8" : "#f43f5e";
       const stoneColor = floor <= 3 ? "#44403c" : floor <= 6 ? "#475569" : "#7f1d1d";
@@ -1232,14 +1232,14 @@ export default function InfiniteQuest() {
 
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill={dungeonBg}/>
-          <path d="M 140 160 L 140 80 Q 140 40 200 40 Q 260 40 260 80 L 260 160" stroke={stoneColor} strokeWidth="8" fill="none"/>
-          <path d="M 150 160 L 150 80 Q 150 50 200 50 Q 250 50 250 80 L 250 160" stroke="#1c1917" strokeWidth="2" fill="none"/>
+          <rect width="400" height="160" fill={dungeonBg} />
+          <path d="M 140 160 L 140 80 Q 140 40 200 40 Q 260 40 260 80 L 260 160" stroke={stoneColor} strokeWidth="8" fill="none" />
+          <path d="M 150 160 L 150 80 Q 150 50 200 50 Q 250 50 250 80 L 250 160" stroke="#1c1917" strokeWidth="2" fill="none" />
           <text x="110" y="80" fill={runeColor} fontSize="12" fontFamily="serif" opacity="0.6" style={{ animation: 'floatRune 3s ease-in-out infinite' }}>ᛗ</text>
           <text x="280" y="70" fill={runeColor} fontSize="14" fontFamily="serif" opacity="0.7" style={{ animation: 'floatRune 4s ease-in-out infinite' }}>ᚠ</text>
           <text x="200" y="30" fill={runeColor} fontSize="10" fontFamily="serif" opacity="0.5" style={{ animation: 'floatRune 2.5s ease-in-out infinite' }}>ᚱ</text>
-          <path d="M 0 130 Q 200 140 400 130 L 400 160 L 0 160 Z" fill="#292524"/>
-          <rect x="185" y="115" width="30" height="20" rx="3" fill="#1c1917" stroke={runeColor} strokeWidth="1.5" style={{ animation: 'glowPedestal 2s infinite' }}/>
+          <path d="M 0 130 Q 200 140 400 130 L 400 160 L 0 160 Z" fill="#292524" />
+          <rect x="185" y="115" width="30" height="20" rx="3" fill="#1c1917" stroke={runeColor} strokeWidth="1.5" style={{ animation: 'glowPedestal 2s infinite' }} />
           <text x="345" y="20" fill="#94a3b8" fontSize="8" fontFamily="monospace" fontWeight="bold" opacity="0.7">FLR // 0{floor}</text>
           <style>{`
             @keyframes floatRune {
@@ -1254,7 +1254,7 @@ export default function InfiniteQuest() {
         </svg>
       );
     }
-    
+
     if (selectedSetting === "☄️ Sector-9") {
       const nebulaColor = floor <= 3 ? "#0284c7" : floor <= 6 ? "#8b5cf6" : "#e11d48";
       const hatchColor = floor <= 3 ? "#1e293b" : floor <= 6 ? "#1e1b4b" : "#111827";
@@ -1262,18 +1262,18 @@ export default function InfiniteQuest() {
 
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#020617"/>
-          <circle cx="40" cy="50" r="1" fill="#fff" opacity="0.8"/>
-          <circle cx="340" cy="30" r="1.5" fill="#fff" opacity="0.9"/>
-          <circle cx="100" cy="20" r="1.2" fill="#fff" opacity="0.7"/>
-          <circle cx="280" cy="90" r="1" fill="#fff" opacity="0.5"/>
-          <circle cx="180" cy="110" r="1" fill="#fff" opacity="0.6"/>
-          <rect x="150" y="20" width="100" height="120" rx="10" fill={hatchColor} stroke="#475569" strokeWidth="3"/>
-          <circle cx="200" cy="80" r="35" fill="#0f172a" stroke="#334155" strokeWidth="2"/>
-          <circle cx="200" cy="80" r="30" fill="#020617"/>
-          <path d="M 185 75 Q 200 65 215 75 T 215 90 T 185 75" fill={nebulaColor} opacity="0.3" style={{ animation: 'nebulaSpace 10s infinite' }}/>
-          <path d="M 130 140 L 150 160 M 150 140 L 170 160 M 170 140 L 190 160 M 190 140 L 210 160 M 210 140 L 230 160 M 230 140 L 250 160 M 250 140 L 270 160" stroke={warningColor} strokeWidth="4"/>
-          <path d="M 0 145 L 400 145" stroke="#334155" strokeWidth="2"/>
+          <rect width="400" height="160" fill="#020617" />
+          <circle cx="40" cy="50" r="1" fill="#fff" opacity="0.8" />
+          <circle cx="340" cy="30" r="1.5" fill="#fff" opacity="0.9" />
+          <circle cx="100" cy="20" r="1.2" fill="#fff" opacity="0.7" />
+          <circle cx="280" cy="90" r="1" fill="#fff" opacity="0.5" />
+          <circle cx="180" cy="110" r="1" fill="#fff" opacity="0.6" />
+          <rect x="150" y="20" width="100" height="120" rx="10" fill={hatchColor} stroke="#475569" strokeWidth="3" />
+          <circle cx="200" cy="80" r="35" fill="#0f172a" stroke="#334155" strokeWidth="2" />
+          <circle cx="200" cy="80" r="30" fill="#020617" />
+          <path d="M 185 75 Q 200 65 215 75 T 215 90 T 185 75" fill={nebulaColor} opacity="0.3" style={{ animation: 'nebulaSpace 10s infinite' }} />
+          <path d="M 130 140 L 150 160 M 150 140 L 170 160 M 170 140 L 190 160 M 190 140 L 210 160 M 210 140 L 230 160 M 230 140 L 250 160 M 250 140 L 270 160" stroke={warningColor} strokeWidth="4" />
+          <path d="M 0 145 L 400 145" stroke="#334155" strokeWidth="2" />
           <text x="345" y="20" fill="#94a3b8" fontSize="8" fontFamily="monospace" fontWeight="bold" opacity="0.7">FLR // 0{floor}</text>
           <style>{`
             @keyframes nebulaSpace {
@@ -1284,13 +1284,13 @@ export default function InfiniteQuest() {
         </svg>
       );
     }
-    
+
     return null;
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 antialiased">
-      
+
       {/* VIEW 1: CHARACTER CREATOR */}
       {view === 'create' && (
         <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
@@ -1304,8 +1304,8 @@ export default function InfiniteQuest() {
           <div className="space-y-6">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Character Alias</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Enter character name..."
                 value={char.name}
                 onChange={(e) => setChar({ ...char, name: e.target.value })}
@@ -1320,11 +1320,10 @@ export default function InfiniteQuest() {
                   <button
                     key={className}
                     onClick={() => setChar({ ...char, class: className })}
-                    className={`p-3 text-xs font-medium border rounded-lg transition-all ${
-                      char.class === className 
-                        ? 'bg-purple-950/40 border-purple-500 text-purple-300 shadow-md shadow-purple-500/10' 
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
+                    className={`p-3 text-xs font-medium border rounded-lg transition-all ${char.class === className
+                      ? 'bg-purple-950/40 border-purple-500 text-purple-300 shadow-md shadow-purple-500/10'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                      }`}
                   >
                     {className}
                   </button>
@@ -1416,7 +1415,7 @@ export default function InfiniteQuest() {
       {/* VIEW 3: ACTIVE PLAYABLE LOOP */}
       {view === 'game' && (
         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-4 gap-6">
-          
+
           {/* Character sidebar tracking layout */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:col-span-1 space-y-4 h-fit">
             <div>
@@ -1439,7 +1438,7 @@ export default function InfiniteQuest() {
               </div>
             </div>
 
-             <div className="border-t border-slate-800 pt-3 space-y-2 text-xs">
+            <div className="border-t border-slate-800 pt-3 space-y-2 text-xs">
               {earnedPoints > 0 && (
                 <div className="text-[10px] text-purple-400 font-bold bg-purple-950/40 border border-purple-800 rounded px-2 py-1 text-center animate-pulse mb-2">
                   ✨ {earnedPoints} Upgrade Point{earnedPoints > 1 ? 's' : ''} available!
@@ -1536,7 +1535,7 @@ export default function InfiniteQuest() {
               <div className="text-2xl font-black text-purple-400">{score}</div>
             </div>
 
-            <button 
+            <button
               onClick={() => {
                 setView('create');
                 setPointsLeft(10);
@@ -1568,21 +1567,19 @@ export default function InfiniteQuest() {
             <div className="flex gap-2 border-b border-slate-800 pb-2">
               <button
                 onClick={() => setTab('story')}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg transition-all ${
-                  tab === 'story'
-                    ? 'bg-slate-900 border-t border-x border-slate-800 text-purple-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg transition-all ${tab === 'story'
+                  ? 'bg-slate-900 border-t border-x border-slate-800 text-purple-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+                  }`}
               >
                 🎮 Chronicle Simulation
               </button>
               <button
                 onClick={() => setTab('shop')}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg transition-all relative ${
-                  tab === 'shop'
-                    ? 'bg-slate-900 border-t border-x border-slate-800 text-purple-400 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg transition-all relative ${tab === 'shop'
+                  ? 'bg-slate-900 border-t border-x border-slate-800 text-purple-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+                  }`}
               >
                 🛒 Matrix Shop & Armory
                 {gold >= 20 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-500 rounded-full animate-ping" />}
@@ -1622,18 +1619,18 @@ export default function InfiniteQuest() {
                       <div className="absolute inset-0 pointer-events-none z-10">
                         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none">
                           <g style={{ transformOrigin: '200px 80px' }}>
-                            <line x1="200" y1="80" x2="0" y2="0" stroke="#a855f7" strokeWidth="2" className="speed-line" style={{ animationDelay: '0s' }}/>
-                            <line x1="200" y1="80" x2="400" y2="0" stroke="#ec4899" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.1s' }}/>
-                            <line x1="200" y1="80" x2="0" y2="160" stroke="#3b82f6" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.2s' }}/>
-                            <line x1="200" y1="80" x2="400" y2="160" stroke="#06b6d4" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.15s' }}/>
-                            <line x1="200" y1="80" x2="200" y2="-40" stroke="#fff" strokeWidth="1" className="speed-line" style={{ animationDelay: '0.05s' }}/>
-                            <line x1="200" y1="80" x2="200" y2="200" stroke="#fff" strokeWidth="1" className="speed-line" style={{ animationDelay: '0.25s' }}/>
+                            <line x1="200" y1="80" x2="0" y2="0" stroke="#a855f7" strokeWidth="2" className="speed-line" style={{ animationDelay: '0s' }} />
+                            <line x1="200" y1="80" x2="400" y2="0" stroke="#ec4899" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.1s' }} />
+                            <line x1="200" y1="80" x2="0" y2="160" stroke="#3b82f6" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.2s' }} />
+                            <line x1="200" y1="80" x2="400" y2="160" stroke="#06b6d4" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.15s' }} />
+                            <line x1="200" y1="80" x2="200" y2="-40" stroke="#fff" strokeWidth="1" className="speed-line" style={{ animationDelay: '0.05s' }} />
+                            <line x1="200" y1="80" x2="200" y2="200" stroke="#fff" strokeWidth="1" className="speed-line" style={{ animationDelay: '0.25s' }} />
                           </g>
                         </svg>
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Story text display */}
                   <div className="p-6 flex-1 flex flex-col justify-start overflow-y-auto">
                     {/* NPC Radio Transmission */}
@@ -1669,24 +1666,22 @@ export default function InfiniteQuest() {
                 <div className="grid grid-cols-1 gap-2.5">
                   {currentChoices.length > 0 ? (
                     currentChoices.map((choice, idx) => (
-                      <button 
+                      <button
                         key={idx}
                         onClick={() => handleAction(choice)}
-                        className={`w-full text-left text-xs p-3.5 bg-slate-900 hover:bg-slate-850 border rounded-lg text-slate-300 transition-all font-mono flex justify-between items-center group ${
-                          choice.statType === 'rest' 
-                            ? 'border-emerald-900/45 hover:border-emerald-500/40 hover:text-emerald-300' 
-                            : 'border-slate-800 hover:border-purple-900/40 hover:text-purple-300'
-                        }`}
+                        className={`w-full text-left text-xs p-3.5 bg-slate-900 hover:bg-slate-850 border rounded-lg text-slate-300 transition-all font-mono flex justify-between items-center group ${choice.statType === 'rest'
+                          ? 'border-emerald-900/45 hover:border-emerald-500/40 hover:text-emerald-300'
+                          : 'border-slate-800 hover:border-purple-900/40 hover:text-purple-300'
+                          }`}
                       >
                         <span>
                           {choice.statType === 'rest' ? '⛺ ' : '🎯 '}
                           {choice.text}
                         </span>
-                        <span className={`text-[10px] uppercase bg-slate-950 px-2 py-0.5 rounded border text-slate-500 group-hover:text-purple-400 transition-colors ${
-                          choice.statType === 'rest' 
-                            ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300' 
-                            : 'border-slate-800 font-mono text-[9px] flex gap-1.5 items-center'
-                        }`}>
+                        <span className={`text-[10px] uppercase bg-slate-950 px-2 py-0.5 rounded border text-slate-500 group-hover:text-purple-400 transition-colors ${choice.statType === 'rest'
+                          ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300'
+                          : 'border-slate-800 font-mono text-[9px] flex gap-1.5 items-center'
+                          }`}>
                           {choice.statType === 'rest' ? 'HEAL / REST' : `${choice.statType} (Diff: ${choice.difficulty})`}
                         </span>
                       </button>
@@ -1712,7 +1707,7 @@ export default function InfiniteQuest() {
                     {/* Left Column: Gear */}
                     <div className="space-y-4 border-r border-slate-800 pr-0 md:pr-6">
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Equipped Gear</h3>
-                      
+
                       {([
                         { slotName: 'weapon', displayName: '⚔️ Primary Weapon' },
                         { slotName: 'head', displayName: '👤 Head Unit' },
@@ -1727,9 +1722,8 @@ export default function InfiniteQuest() {
                               <span className="text-[10px] text-slate-500 uppercase font-semibold">{displayName}</span>
                               {item ? (
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded ${
-                                    { E: 'bg-slate-800 text-slate-300', D: 'bg-emerald-950 text-emerald-400', C: 'bg-sky-950 text-sky-400', B: 'bg-indigo-950 text-indigo-400', A: 'bg-amber-950 text-amber-500', S: 'bg-pink-950 text-pink-500' }[item.grade]
-                                  }`}>
+                                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded ${{ E: 'bg-slate-800 text-slate-300', D: 'bg-emerald-950 text-emerald-400', C: 'bg-sky-950 text-sky-400', B: 'bg-indigo-950 text-indigo-400', A: 'bg-amber-950 text-amber-500', S: 'bg-pink-950 text-pink-500' }[item.grade]
+                                    }`}>
                                     {item.grade}
                                   </span>
                                   <span className="text-xs font-bold text-slate-200">{item.name}</span>
@@ -1764,7 +1758,7 @@ export default function InfiniteQuest() {
                       {/* Gear Cache */}
                       <div className="space-y-2">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Merchant Cache (Gear)</h3>
-                        
+
                         {shopItems.length > 0 ? (
                           shopItems.map((item) => {
                             const canBuy = gold >= item.cost;
@@ -1800,11 +1794,10 @@ export default function InfiniteQuest() {
                                     setEquipment(prev => ({ ...prev, [item.slot]: item }));
                                     setShopItems(prev => prev.filter(i => i.id !== item.id));
                                   }}
-                                  className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
-                                    canBuy
-                                      ? 'bg-yellow-600 hover:bg-yellow-500 text-slate-950 font-black shadow-md cursor-pointer'
-                                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                  }`}
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${canBuy
+                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-slate-950 font-black shadow-md cursor-pointer'
+                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    }`}
                                 >
                                   🪙 {item.cost}g
                                 </button>
@@ -1835,11 +1828,10 @@ export default function InfiniteQuest() {
                                 <button
                                   disabled={!canBuy}
                                   onClick={() => buyPotion(p.name, p.cost, p.type, p.desc)}
-                                  className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
-                                    canBuy
-                                      ? 'bg-purple-900 hover:bg-purple-800 text-purple-200 cursor-pointer font-black'
-                                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                  }`}
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${canBuy
+                                    ? 'bg-purple-900 hover:bg-purple-800 text-purple-200 cursor-pointer font-black'
+                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    }`}
                                 >
                                   {potions.length >= 3 && gold >= p.cost ? 'Full' : `🪙 ${p.cost}g`}
                                 </button>
