@@ -19,6 +19,7 @@ interface Choice {
   statType: 'strength' | 'agility' | 'intelligence' | 'general' | 'rest';
   difficulty: number;
   eventType?: string;
+  rewardMult?: number;
 }
 
 interface EquipmentItem {
@@ -45,21 +46,21 @@ const NARRATIVE_POOLS = {
     hazards: ["a squad of corporate security drones sweeps the zone", "a rogue AI starts frying the local grid overhead", "a group of street punks demands an entry toll", "a faulty terminal leaks high-voltage plasma lines"],
     rewards: ["you find an encrypted datapad", "a sympathetic decker beams you a temporary power boost", "you discover a hidden access ventilation shaft"],
     actions: [
-      { text: "Use brute force to rip open the magnetic locking bolts", statType: "strength", difficulty: 12 },
-      { text: "Attempt to slide through the laser grids undetected", statType: "agility", difficulty: 13 },
-      { text: "Hack the central terminal control routing nodes", statType: "intelligence", difficulty: 11 },
-      { text: "Proceed cautiously into the shadows", statType: "general", difficulty: 8 }
+      { text: "Rip open the magnetic locks of the {location} using brute force", statType: "strength", difficulty: 12 },
+      { text: "Attempt to slip past the {hazard} undetected", statType: "agility", difficulty: 13 },
+      { text: "Hack the server routing nodes to override the {hazard}", statType: "intelligence", difficulty: 11 },
+      { text: "Proceed cautiously into the shadows of the {location}", statType: "general", difficulty: 8 }
     ]
   },
   "🏰 Eldoria": {
-    locations: ["a crumbling obsidian tower balcony", "a moss-covered druid sanctuary", "the damp underground catacombs", "a flickering tavern filled with suspicious mercenaries", "a clearing next to a sleeping stone golem"],
+    locations: ["a crumbling obsidian tower balcony", "a moss-covered druid sanctuary", "the damp underground catacombs", "a flickering tavern filled with mercenaries", "a clearing next to a sleeping stone golem"],
     hazards: ["a swarm of shadow-imps descends from the rafters", "the stone floor begins collapsing into a spiked pit", "a magical ward triggers a localized fire-storm", "an armored skeletal guard draws its rusted claymore"],
     rewards: ["a glowing mana crystal hums in the corner", "you spot an unmapped escape tunnel behind a tapestry", "a fountain of clear water restores your focus"],
     actions: [
-      { text: "Smash through the obstacle with pure physical might", statType: "strength", difficulty: 13 },
-      { text: "Dodge under the incoming threat with a quick roll", statType: "agility", difficulty: 11 },
-      { text: "Decipher the ancient arcane glyphs carved into the wall", statType: "intelligence", difficulty: 12 },
-      { text: "Look around for a mundane alternative route", statType: "general", difficulty: 9 }
+      { text: "Smash through the magical barriers in the {location} with physical might", statType: "strength", difficulty: 13 },
+      { text: "Evade the {hazard} by diving behind the stonework of the {location}", statType: "agility", difficulty: 11 },
+      { text: "Decipher the runes of the {location} to neutralize the {hazard}", statType: "intelligence", difficulty: 12 },
+      { text: "Look around for a mundane alternative route through the {location}", statType: "general", difficulty: 9 }
     ]
   },
   "☄️ Sector-9": {
@@ -67,10 +68,10 @@ const NARRATIVE_POOLS = {
     hazards: ["the oxygen scrubbers suddenly fail, dropping pressure", "a mutated xenomorph lifeform screeches in the vents", "an exposed plasma fuel line bursts into flames", "the artificial gravity matrix flips completely upside down"],
     rewards: ["a pristine emergency medkit rests in a wall locker", "the auxiliary terminal reveals a maintenance schematic", "a heavy steel blast door seals off the danger just in time"],
     actions: [
-      { text: "Force the manual airlock crank open with your bare hands", statType: "strength", difficulty: 14 },
-      { text: "Scramble into the narrow service conduits quickly", statType: "agility", difficulty: 12 },
-      { text: "Bypass the blown command circuits using a plasma torch", statType: "intelligence", difficulty: 11 },
-      { text: "Brace yourself and look for standard cover", statType: "general", difficulty: 8 }
+      { text: "Force the bulkhead gears of the {location} open with your bare hands", statType: "strength", difficulty: 14 },
+      { text: "Scramble into the service conduits of the {location} to dodge the {hazard}", statType: "agility", difficulty: 12 },
+      { text: "Bypass the blown terminal circuits to isolate the {hazard}", statType: "intelligence", difficulty: 11 },
+      { text: "Brace yourself against the steel bulkheads of the {location}", statType: "general", difficulty: 8 }
     ]
   }
 };
@@ -350,11 +351,33 @@ export default function InfiniteQuest() {
     setTab('story');
     
     const pool = NARRATIVE_POOLS[settingName];
-    const initialText = `The chronicle of ${char.name} the ${char.class} begins inside ${pool.locations[0]}. Suddenly, ${pool.hazards[0]}! What is your immediate course of action?`;
+    const initialLocation = pool.locations[0];
+    const initialHazard = pool.hazards[0];
+    const initialText = `The chronicle of ${char.name} the ${char.class} begins inside ${initialLocation}. Suddenly, ${initialHazard}! What is your immediate course of action?`;
     
     setStoryText(initialText);
-    // Grab initial choices
-    const initialChoices = [...pool.actions].sort(() => 0.5 - Math.random()).slice(0, 3) as Choice[];
+    
+    // Grab initial choices and interpolate situation details with varied weights
+    const initialChoices = [...pool.actions].sort(() => 0.5 - Math.random()).slice(0, 3).map(action => {
+      const text = action.text
+        .replace("{location}", initialLocation)
+        .replace("{hazard}", initialHazard);
+      
+      const rand = Math.random();
+      let difficultyBonus = 0;
+      let rewardMult = 1.0;
+      if (rand < 0.3) {
+        difficultyBonus = -3;
+        rewardMult = 0.6;
+      } else if (rand > 0.7) {
+        difficultyBonus = 4;
+        rewardMult = 2.0;
+      }
+      
+      const scaledDiff = Math.max(5, Math.floor(action.difficulty + difficultyBonus));
+      return { ...action, text, difficulty: scaledDiff, rewardMult };
+    }) as Choice[];
+    
     setCurrentChoices(initialChoices);
     setView('game');
   };
@@ -522,14 +545,34 @@ export default function InfiniteQuest() {
     const nextChapterText = `\n\nMoving forward, you navigate deeper into ${nextLocation}. Before you can catch your breath, ${nextHazard}!`;
     setStoryText(resolutionText + nextChapterText);
 
-    const regularChoices = [...pool.actions].sort(() => 0.5 - Math.random()) as Choice[];
-    let choices = regularChoices.slice(0, 3);
+    // Interpolate situation details & varied weights
+    const regularChoices = [...pool.actions].map(action => {
+      const text = action.text
+        .replace("{location}", nextLocation)
+        .replace("{hazard}", nextHazard);
+      
+      const rand = Math.random();
+      let difficultyBonus = 0;
+      let rewardMult = 1.0;
+      if (rand < 0.3) {
+        difficultyBonus = -3;
+        rewardMult = 0.6;
+      } else if (rand > 0.7) {
+        difficultyBonus = 4;
+        rewardMult = 2.0;
+      }
+      
+      const scaledDiff = Math.max(5, Math.floor(action.difficulty + score / 3 + difficultyBonus));
+      return { ...action, text, difficulty: scaledDiff, rewardMult };
+    }) as Choice[];
+    
+    let choices = regularChoices.sort(() => 0.5 - Math.random()).slice(0, 3);
     const shouldOfferRest = currentHealth < 40 || (currentHealth < 70 && Math.random() < 0.4);
     if (shouldOfferRest) {
       const restOptions = [
-        { text: "Set up a temporary shelter and tend to your wounds", statType: "rest", difficulty: 0 },
-        { text: "Consume an emergency ration pack and rest in the shadows", statType: "rest", difficulty: 0 },
-        { text: "Take a brief moment to catch your breath and recuperate", statType: "rest", difficulty: 0 }
+        { text: `Set up a temporary shelter in the ${nextLocation} and tend to your wounds`, statType: "rest", difficulty: 0, rewardMult: 1.0 },
+        { text: `Consume an emergency ration pack and rest in the shadows of ${nextLocation}`, statType: "rest", difficulty: 0, rewardMult: 1.0 },
+        { text: `Take a brief moment in the ${nextLocation} to catch your breath`, statType: "rest", difficulty: 0, rewardMult: 1.0 }
       ] as Choice[];
       choices[2] = restOptions[Math.floor(Math.random() * restOptions.length)];
     }
@@ -576,15 +619,34 @@ export default function InfiniteQuest() {
         const nextChapterText = `\n\nMoving forward, you navigate deeper into ${nextLocation}. Before you can catch your breath, ${nextHazard}!`;
         setStoryText(resolutionText + nextChapterText);
         
-        // Generate regular choices with possible rest option
-        const regularChoices = [...pool.actions].sort(() => 0.5 - Math.random()) as Choice[];
-        let choices = regularChoices.slice(0, 3);
+        // Interpolate situation details & varied weights
+        const regularChoices = [...pool.actions].map(action => {
+          const text = action.text
+            .replace("{location}", nextLocation)
+            .replace("{hazard}", nextHazard);
+          
+          const rand = Math.random();
+          let difficultyBonus = 0;
+          let rewardMult = 1.0;
+          if (rand < 0.3) {
+            difficultyBonus = -3;
+            rewardMult = 0.6;
+          } else if (rand > 0.7) {
+            difficultyBonus = 4;
+            rewardMult = 2.0;
+          }
+          
+          const scaledDiff = Math.max(5, Math.floor(action.difficulty + score / 3 + difficultyBonus));
+          return { ...action, text, difficulty: scaledDiff, rewardMult };
+        }) as Choice[];
+        
+        let choices = regularChoices.sort(() => 0.5 - Math.random()).slice(0, 3);
         const shouldOfferRest = newHealth < 40 || (newHealth < 70 && Math.random() < 0.4);
         if (shouldOfferRest) {
           const restOptions = [
-            { text: "Set up a temporary shelter and tend to your wounds", statType: "rest", difficulty: 0 },
-            { text: "Consume an emergency ration pack and rest in the shadows", statType: "rest", difficulty: 0 },
-            { text: "Take a brief moment to catch your breath and recuperate", statType: "rest", difficulty: 0 }
+            { text: `Set up a temporary shelter in the ${nextLocation} and tend to your wounds`, statType: "rest", difficulty: 0, rewardMult: 1.0 },
+            { text: `Consume an emergency ration pack and rest in the shadows of ${nextLocation}`, statType: "rest", difficulty: 0, rewardMult: 1.0 },
+            { text: `Take a brief moment in the ${nextLocation} to catch your breath`, statType: "rest", difficulty: 0, rewardMult: 1.0 }
           ] as Choice[];
           choices[2] = restOptions[Math.floor(Math.random() * restOptions.length)];
         }
@@ -625,10 +687,30 @@ export default function InfiniteQuest() {
         setGold(prev => prev + goldGain);
         rewardText = `You defeated the Boss! You earned ${bossPoints} Attribute Upgrade Points, gained ${goldGain} Gold, and restored ${heal} Vitality`;
       } else {
-        // Regular room successes do NOT grant points anymore
-        goldGain = Math.floor(Math.random() * 11) + 15; // 15-25 gold
+        const baseGold = Math.floor(Math.random() * 11) + 15;
+        const mult = choice.rewardMult || 1.0;
+        goldGain = Math.floor(baseGold * mult);
         setGold(prev => prev + goldGain);
-        rewardText = `${pool.rewards[Math.floor(Math.random() * pool.rewards.length)]} (Gained +${goldGain} Gold)`;
+        
+        let extraText = "";
+        if (mult > 1.5 && Math.random() < 0.15 && potions.length < 3) {
+          const potTypes = [
+            { name: "Vitality Elixir", type: "health" as const, desc: "Heals 35 Vitality on use" },
+            { name: "Alchemist Liquid", type: "gold" as const, desc: "Yields 20-100 Gold" },
+            { name: "Core Mutagen", type: "stat" as const, desc: "Permanent +1 to a random base stat" }
+          ];
+          const pot = potTypes[Math.floor(Math.random() * potTypes.length)];
+          const potionEarned = {
+            id: `potion_${Date.now()}_${Math.random()}`,
+            name: pot.name,
+            type: pot.type,
+            description: pot.desc,
+            cost: 0
+          };
+          setPotions(prev => [...prev, potionEarned]);
+          extraText = ` and salvaged a ${pot.name}`;
+        }
+        rewardText = `${pool.rewards[Math.floor(Math.random() * pool.rewards.length)]} (Gained +${goldGain} Gold${extraText})`;
       }
       resolutionText = `[SUCCESS] You chose to: "${choice.text}". Your ${choice.statType.toUpperCase()} trait held strong! (Rolled ${totalRoll} vs Diff ${choice.difficulty}). You expertly bypass the threat, and ${rewardText}.`;
     } else {
@@ -679,15 +761,34 @@ export default function InfiniteQuest() {
       const nextChapterText = `\n\nMoving forward, you navigate deeper into ${nextLocation}. Before you can catch your breath, ${nextHazard}!`;
       setStoryText(resolutionText + nextChapterText);
 
-      // Generate regular choices with possible rest option
-      const regularChoices = [...pool.actions].sort(() => 0.5 - Math.random()) as Choice[];
-      let choices = regularChoices.slice(0, 3);
+      // Interpolate situation details & varied weights
+      const regularChoices = [...pool.actions].map(action => {
+        const text = action.text
+          .replace("{location}", nextLocation)
+          .replace("{hazard}", nextHazard);
+        
+        const rand = Math.random();
+        let difficultyBonus = 0;
+        let rewardMult = 1.0;
+        if (rand < 0.3) {
+          difficultyBonus = -3;
+          rewardMult = 0.6;
+        } else if (rand > 0.7) {
+          difficultyBonus = 4;
+          rewardMult = 2.0;
+        }
+        
+        const scaledDiff = Math.max(5, Math.floor(action.difficulty + score / 3 + difficultyBonus));
+        return { ...action, text, difficulty: scaledDiff, rewardMult };
+      }) as Choice[];
+      
+      let choices = regularChoices.sort(() => 0.5 - Math.random()).slice(0, 3);
       const shouldOfferRest = currentHealth < 40 || (currentHealth < 70 && Math.random() < 0.4);
       if (shouldOfferRest) {
         const restOptions = [
-          { text: "Set up a temporary shelter and tend to your wounds", statType: "rest", difficulty: 0 },
-          { text: "Consume an emergency ration pack and rest in the shadows", statType: "rest", difficulty: 0 },
-          { text: "Take a brief moment to catch your breath and recuperate", statType: "rest", difficulty: 0 }
+          { text: `Set up a temporary shelter in the ${nextLocation} and tend to your wounds`, statType: "rest", difficulty: 0, rewardMult: 1.0 },
+          { text: `Consume an emergency ration pack and rest in the shadows of ${nextLocation}`, statType: "rest", difficulty: 0, rewardMult: 1.0 },
+          { text: `Take a brief moment in the ${nextLocation} to catch your breath`, statType: "rest", difficulty: 0, rewardMult: 1.0 }
         ] as Choice[];
         choices[2] = restOptions[Math.floor(Math.random() * restOptions.length)];
       }
@@ -1193,9 +1294,22 @@ export default function InfiniteQuest() {
                         <span className={`text-[10px] uppercase bg-slate-950 px-2 py-0.5 rounded border text-slate-500 group-hover:text-purple-400 transition-colors ${
                           choice.statType === 'rest' 
                             ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300' 
-                            : 'border-slate-800'
+                            : 'border-slate-800 font-mono text-[9px] flex gap-1.5 items-center'
                         }`}>
-                          {choice.statType === 'rest' ? 'HEAL / REST' : `${choice.statType} (Diff: ${choice.difficulty})`}
+                          {choice.statType === 'rest' ? 'HEAL / REST' : (
+                            <>
+                              <span>{choice.statType} (Diff: {choice.difficulty})</span>
+                              {choice.rewardMult && choice.rewardMult > 1.5 && (
+                                <span className="text-red-400 font-black animate-pulse">🔥 HARD [2.0x Gold]</span>
+                              )}
+                              {choice.rewardMult && choice.rewardMult < 0.8 && (
+                                <span className="text-emerald-400 font-semibold">🟢 EASY [0.6x Gold]</span>
+                              )}
+                              {(!choice.rewardMult || (choice.rewardMult >= 0.8 && choice.rewardMult <= 1.5)) && (
+                                <span className="text-blue-400 font-medium">⚡ MED [1.0x Gold]</span>
+                              )}
+                            </>
+                          )}
                         </span>
                       </button>
                     ))
