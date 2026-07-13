@@ -154,6 +154,7 @@ export default function InfiniteQuest() {
   const [storyText, setStoryText] = useState<string>("");
   const [currentChoices, setCurrentChoices] = useState<Choice[]>([]);
   const [earnedPoints, setEarnedPoints] = useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   
   // RPG System States
   const [tab, setTab] = useState<'story' | 'shop'>('story');
@@ -383,6 +384,15 @@ export default function InfiniteQuest() {
   };
 
   const handleEventAction = (choice: Choice) => {
+    if (!selectedSetting || isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      executeEventActionLogic(choice);
+      setIsTransitioning(false);
+    }, 850);
+  };
+
+  const executeEventActionLogic = (choice: Choice) => {
     if (!selectedSetting) return;
     const pool = NARRATIVE_POOLS[selectedSetting];
     
@@ -581,6 +591,21 @@ export default function InfiniteQuest() {
   };
 
   const handleAction = (choice: Choice) => {
+    if (!selectedSetting || isTransitioning) return;
+    
+    if (choice.eventType) {
+      handleEventAction(choice);
+      return;
+    }
+    
+    setIsTransitioning(true);
+    setTimeout(() => {
+      executeActionLogic(choice);
+      setIsTransitioning(false);
+    }, 850);
+  };
+
+  const executeActionLogic = (choice: Choice) => {
     if (!selectedSetting) return;
     const pool = NARRATIVE_POOLS[selectedSetting];
     
@@ -802,6 +827,43 @@ export default function InfiniteQuest() {
     const isGameOver = currentChoices.length === 0;
     const isBossActive = currentChoices.length > 0 && BOSS_POOL[selectedSetting]?.actions.some(a => a.text === currentChoices[0].text);
     const isRestingActive = currentChoices.length > 0 && currentChoices.some(c => c.statType === 'rest');
+    const floor = score + 1;
+
+    if (isTransitioning) {
+      return (
+        <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="160" fill="#020617"/>
+          <g style={{ transformOrigin: '200px 80px', animation: 'zoomSpace 0.8s ease-in-out infinite' }}>
+            <line x1="200" y1="80" x2="50" y2="-20" stroke="#a855f7" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="80" x2="350" y2="-20" stroke="#ec4899" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="80" x2="-50" y2="180" stroke="#3b82f6" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="80" x2="450" y2="180" stroke="#06b6d4" strokeWidth="2" opacity="0.6"/>
+            <line x1="200" y1="80" x2="200" y2="-40" stroke="#a855f7" strokeWidth="1.5" opacity="0.4"/>
+            <line x1="200" y1="80" x2="200" y2="200" stroke="#3b82f6" strokeWidth="1.5" opacity="0.4"/>
+            <line x1="200" y1="80" x2="-40" y2="80" stroke="#ec4899" strokeWidth="1.5" opacity="0.4"/>
+            <line x1="200" y1="80" x2="440" y2="80" stroke="#06b6d4" strokeWidth="1.5" opacity="0.4"/>
+          </g>
+          <circle cx="200" cy="80" r="10" stroke="#fff" strokeWidth="1.5" opacity="0.8" style={{ animation: 'expandCircle 0.8s ease-out infinite' }}/>
+          <circle cx="200" cy="80" r="30" stroke="#fff" strokeWidth="1" opacity="0.5" style={{ animation: 'expandCircle 0.8s ease-out infinite', animationDelay: '0.2s' }}/>
+          <circle cx="200" cy="80" r="60" stroke="#a855f7" strokeWidth="1" opacity="0.3" style={{ animation: 'expandCircle 0.8s ease-out infinite', animationDelay: '0.4s' }}/>
+          <text x="50%" y="85" textAnchor="middle" fill="#fff" fontSize="10" fontFamily="monospace" fontWeight="bold" letterSpacing="4" style={{ animation: 'textPulse 0.4s infinite' }}>DEVOLVING TO FLOOR 0{floor}...</text>
+          <style>{`
+            @keyframes zoomSpace {
+              0% { transform: scale(0.3); opacity: 0.2; }
+              100% { transform: scale(1.5); opacity: 1; }
+            }
+            @keyframes expandCircle {
+              0% { r: 5px; opacity: 1; stroke-width: 2px; }
+              100% { r: 120px; opacity: 0; stroke-width: 0.5px; }
+            }
+            @keyframes textPulse {
+              0%, 100% { opacity: 0.6; }
+              50% { opacity: 1; }
+            }
+          `}</style>
+        </svg>
+      );
+    }
     
     if (isGameOver) {
       return (
@@ -878,19 +940,25 @@ export default function InfiniteQuest() {
     }
     
     if (selectedSetting === "🌌 Neon Core") {
+      const neonColor1 = floor <= 3 ? "#06b6d4" : floor <= 6 ? "#10b981" : "#ef4444";
+      const neonColor2 = floor <= 3 ? "#3b82f6" : floor <= 6 ? "#f59e0b" : "#ec4899";
+      const cityBgColor = floor <= 3 ? "#0f172a" : floor <= 6 ? "#064e3b" : "#450a0a";
+      const strokeLines = floor <= 3 ? "#1e1b4b" : floor <= 6 ? "#065f46" : "#7f1d1d";
+
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="160" fill="#030712"/>
-          <path d="M 0 100 L 400 100 M 0 120 L 400 120 M 0 140 L 400 140" stroke="#1e1b4b" strokeWidth="1"/>
-          <path d="M 200 80 L -100 160 M 200 80 L 0 160 M 200 80 L 100 160 M 200 80 L 200 160 M 200 80 L 300 160 M 200 80 L 400 160 M 200 80 L 500 160" stroke="#1e1b4b" strokeWidth="1"/>
-          <rect x="30" y="40" width="40" height="80" fill="#0f172a" stroke="#3b82f6" strokeWidth="0.5" opacity="0.8"/>
-          <rect x="90" y="20" width="50" height="100" fill="#0f172a" stroke="#a855f7" strokeWidth="0.5" opacity="0.8"/>
-          <rect x="260" y="30" width="45" height="90" fill="#0f172a" stroke="#3b82f6" strokeWidth="0.5" opacity="0.8"/>
-          <rect x="320" y="50" width="50" height="70" fill="#0f172a" stroke="#ec4899" strokeWidth="0.5" opacity="0.8"/>
-          <path d="M 10 150 L 50 150 L 70 130 L 120 130" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2s infinite' }}/>
-          <circle cx="120" cy="130" r="3" fill="#06b6d4" opacity="0.8"/>
-          <path d="M 390 150 L 350 150 L 330 130 L 300 130" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2.5s infinite' }}/>
-          <circle cx="300" cy="130" r="3" fill="#ec4899" opacity="0.8"/>
+          <path d="M 0 100 L 400 100 M 0 120 L 400 120 M 0 140 L 400 140" stroke={strokeLines} strokeWidth="1"/>
+          <path d="M 200 80 L -100 160 M 200 80 L 0 160 M 200 80 L 100 160 M 200 80 L 200 160 M 200 80 L 300 160 M 200 80 L 400 160 M 200 80 L 500 160" stroke={strokeLines} strokeWidth="1"/>
+          <rect x="30" y="40" width="40" height="80" fill={cityBgColor} stroke={neonColor2} strokeWidth="0.5" opacity="0.8"/>
+          <rect x="90" y="20" width="50" height="100" fill={cityBgColor} stroke={neonColor1} strokeWidth="0.5" opacity="0.8"/>
+          <rect x="260" y="30" width="45" height="90" fill={cityBgColor} stroke={neonColor2} strokeWidth="0.5" opacity="0.8"/>
+          <rect x="320" y="50" width="50" height="70" fill={cityBgColor} stroke={neonColor1} strokeWidth="0.5" opacity="0.8"/>
+          <path d="M 10 150 L 50 150 L 70 130 L 120 130" stroke={neonColor1} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2s infinite' }}/>
+          <circle cx="120" cy="130" r="3" fill={neonColor1} opacity="0.8"/>
+          <path d="M 390 150 L 350 150 L 330 130 L 300 130" stroke={neonColor2} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" style={{ animation: 'pulseNeon 2.5s infinite' }}/>
+          <circle cx="300" cy="130" r="3" fill={neonColor2} opacity="0.8"/>
+          <text x="345" y="20" fill="#94a3b8" fontSize="8" fontFamily="monospace" fontWeight="bold" opacity="0.7">FLR // 0{floor}</text>
           <style>{`
             @keyframes pulseNeon {
               0%, 100% { opacity: 0.4; }
@@ -902,24 +970,30 @@ export default function InfiniteQuest() {
     }
     
     if (selectedSetting === "🏰 Eldoria") {
+      const runeColor = floor <= 3 ? "#d97706" : floor <= 6 ? "#38bdf8" : "#f43f5e";
+      const stoneColor = floor <= 3 ? "#44403c" : floor <= 6 ? "#475569" : "#7f1d1d";
+      const dungeonBg = floor <= 3 ? "#0c0a09" : floor <= 6 ? "#0f172a" : "#1a0505";
+      const runeGlow = floor <= 3 ? "#f59e0b" : floor <= 6 ? "#0ea5e9" : "#e11d48";
+
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#0c0a09"/>
-          <path d="M 140 160 L 140 80 Q 140 40 200 40 Q 260 40 260 80 L 260 160" stroke="#44403c" strokeWidth="8" fill="none"/>
+          <rect width="400" height="160" fill={dungeonBg}/>
+          <path d="M 140 160 L 140 80 Q 140 40 200 40 Q 260 40 260 80 L 260 160" stroke={stoneColor} strokeWidth="8" fill="none"/>
           <path d="M 150 160 L 150 80 Q 150 50 200 50 Q 250 50 250 80 L 250 160" stroke="#1c1917" strokeWidth="2" fill="none"/>
-          <text x="110" y="80" fill="#d97706" fontSize="12" fontFamily="serif" opacity="0.6" style={{ animation: 'floatRune 3s ease-in-out infinite' }}>ᛗ</text>
-          <text x="280" y="70" fill="#d97706" fontSize="14" fontFamily="serif" opacity="0.7" style={{ animation: 'floatRune 4s ease-in-out infinite' }}>ᚠ</text>
-          <text x="200" y="30" fill="#d97706" fontSize="10" fontFamily="serif" opacity="0.5" style={{ animation: 'floatRune 2.5s ease-in-out infinite' }}>ᚱ</text>
+          <text x="110" y="80" fill={runeColor} fontSize="12" fontFamily="serif" opacity="0.6" style={{ animation: 'floatRune 3s ease-in-out infinite' }}>ᛗ</text>
+          <text x="280" y="70" fill={runeColor} fontSize="14" fontFamily="serif" opacity="0.7" style={{ animation: 'floatRune 4s ease-in-out infinite' }}>ᚠ</text>
+          <text x="200" y="30" fill={runeColor} fontSize="10" fontFamily="serif" opacity="0.5" style={{ animation: 'floatRune 2.5s ease-in-out infinite' }}>ᚱ</text>
           <path d="M 0 130 Q 200 140 400 130 L 400 160 L 0 160 Z" fill="#292524"/>
-          <rect x="185" y="115" width="30" height="20" rx="3" fill="#1c1917" stroke="#d97706" strokeWidth="1.5" style={{ animation: 'glowPedestal 2s infinite' }}/>
+          <rect x="185" y="115" width="30" height="20" rx="3" fill="#1c1917" stroke={runeColor} strokeWidth="1.5" style={{ animation: 'glowPedestal 2s infinite' }}/>
+          <text x="345" y="20" fill="#94a3b8" fontSize="8" fontFamily="monospace" fontWeight="bold" opacity="0.7">FLR // 0{floor}</text>
           <style>{`
             @keyframes floatRune {
               0%, 100% { transform: translateY(0); opacity: 0.3; }
               50% { transform: translateY(-8px); opacity: 0.8; }
             }
             @keyframes glowPedestal {
-              0%, 100% { filter: drop-shadow(0 0 1px #d97706); }
-              50% { filter: drop-shadow(0 0 6px #f59e0b); }
+              0%, 100% { filter: drop-shadow(0 0 1px ${runeColor}); }
+              50% { filter: drop-shadow(0 0 6px ${runeGlow}); }
             }
           `}</style>
         </svg>
@@ -927,6 +1001,10 @@ export default function InfiniteQuest() {
     }
     
     if (selectedSetting === "☄️ Sector-9") {
+      const nebulaColor = floor <= 3 ? "#0284c7" : floor <= 6 ? "#8b5cf6" : "#e11d48";
+      const hatchColor = floor <= 3 ? "#1e293b" : floor <= 6 ? "#1e1b4b" : "#111827";
+      const warningColor = floor <= 3 ? "#eab308" : floor <= 6 ? "#c084fc" : "#ef4444";
+
       return (
         <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="160" fill="#020617"/>
@@ -935,12 +1013,13 @@ export default function InfiniteQuest() {
           <circle cx="100" cy="20" r="1.2" fill="#fff" opacity="0.7"/>
           <circle cx="280" cy="90" r="1" fill="#fff" opacity="0.5"/>
           <circle cx="180" cy="110" r="1" fill="#fff" opacity="0.6"/>
-          <rect x="150" y="20" width="100" height="120" rx="10" fill="#1e293b" stroke="#475569" strokeWidth="3"/>
+          <rect x="150" y="20" width="100" height="120" rx="10" fill={hatchColor} stroke="#475569" strokeWidth="3"/>
           <circle cx="200" cy="80" r="35" fill="#0f172a" stroke="#334155" strokeWidth="2"/>
           <circle cx="200" cy="80" r="30" fill="#020617"/>
-          <path d="M 185 75 Q 200 65 215 75 T 215 90 T 185 75" fill="#0284c7" opacity="0.3" style={{ animation: 'nebulaSpace 10s infinite' }}/>
-          <path d="M 130 140 L 150 160 M 150 140 L 170 160 M 170 140 L 190 160 M 190 140 L 210 160 M 210 140 L 230 160 M 230 140 L 250 160 M 250 140 L 270 160" stroke="#eab308" strokeWidth="4"/>
+          <path d="M 185 75 Q 200 65 215 75 T 215 90 T 185 75" fill={nebulaColor} opacity="0.3" style={{ animation: 'nebulaSpace 10s infinite' }}/>
+          <path d="M 130 140 L 150 160 M 150 140 L 170 160 M 170 140 L 190 160 M 190 140 L 210 160 M 210 140 L 230 160 M 230 140 L 250 160 M 250 140 L 270 160" stroke={warningColor} strokeWidth="4"/>
           <path d="M 0 145 L 400 145" stroke="#334155" strokeWidth="2"/>
+          <text x="345" y="20" fill="#94a3b8" fontSize="8" fontFamily="monospace" fontWeight="bold" opacity="0.7">FLR // 0{floor}</text>
           <style>{`
             @keyframes nebulaSpace {
               0%, 100% { opacity: 0.2; }
