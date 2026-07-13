@@ -1357,6 +1357,7 @@ export default function InfiniteQuest() {
                         </div>
                       </div>
                     </div>
+                  </div>
                 </div>
               </div>
             )}
