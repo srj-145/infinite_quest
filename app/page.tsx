@@ -817,7 +817,6 @@ export default function InfiniteQuest() {
               <RotateCcw className="w-3.5 h-3.5" /> Reset Simulation
             </button>
           </div>
-          </div>
 
           {/* Interactive display output stream panel */}
           <div className="md:col-span-3 space-y-4 flex flex-col justify-between">
