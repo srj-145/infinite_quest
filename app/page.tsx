@@ -20,6 +20,15 @@ interface Choice {
   difficulty: number;
 }
 
+interface EquipmentItem {
+  id: string;
+  name: string;
+  slot: 'head' | 'body' | 'feet' | 'accessory';
+  grade: 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
+  statBoost: { strength?: number; agility?: number; intelligence?: number };
+  cost: number;
+}
+
 // DATA MATRICES FOR THE PROCEDURAL STORY TELLER
 const NARRATIVE_POOLS = {
   "🌌 Neon Core": {
@@ -105,6 +114,130 @@ export default function InfiniteQuest() {
   const [storyText, setStoryText] = useState<string>("");
   const [currentChoices, setCurrentChoices] = useState<Choice[]>([]);
   const [earnedPoints, setEarnedPoints] = useState<number>(0);
+  
+  // RPG System States
+  const [tab, setTab] = useState<'story' | 'shop'>('story');
+  const [gold, setGold] = useState<number>(100);
+  const [equipment, setEquipment] = useState<{
+    head: EquipmentItem | null;
+    body: EquipmentItem | null;
+    feet: EquipmentItem | null;
+    accessory: EquipmentItem | null;
+  }>({
+    head: null,
+    body: null,
+    feet: null,
+    accessory: null,
+  });
+  const [shopItems, setShopItems] = useState<EquipmentItem[]>([]);
+
+  // Calculate combat stats including equipment boosts
+  const getStat = (stat: 'strength' | 'agility' | 'intelligence') => {
+    let val = char[stat];
+    Object.values(equipment).forEach(item => {
+      if (item && item.statBoost[stat]) {
+        val += item.statBoost[stat];
+      }
+    });
+    return val;
+  };
+
+  // Check if any gear is boosting a specific stat
+  const isStatBoosted = (stat: 'strength' | 'agility' | 'intelligence') => {
+    return Object.values(equipment).some(item => item && item.statBoost[stat]);
+  };
+
+  // Generate 3 random shop items based on weighted rarity
+  const generateShopItems = () => {
+    const slots: Array<EquipmentItem['slot']> = ['head', 'body', 'feet', 'accessory'];
+    const grades: Array<{ grade: EquipmentItem['grade']; weight: number }> = [
+      { grade: 'E', weight: 50 },
+      { grade: 'D', weight: 25 },
+      { grade: 'C', weight: 12 },
+      { grade: 'B', weight: 7 },
+      { grade: 'A', weight: 4 },
+      { grade: 'S', weight: 2 }
+    ];
+    
+    const rollGrade = (): EquipmentItem['grade'] => {
+      const rand = Math.random() * 100;
+      let sum = 0;
+      for (const g of grades) {
+        sum += g.weight;
+        if (rand <= sum) return g.grade;
+      }
+      return 'E';
+    };
+
+    const itemNames = {
+      head: {
+        E: ["Scrap Goggles", "Worn Cap"],
+        D: ["Reinforced Visor", "Tactical Helmet"],
+        C: ["Neural Interface Band", "Holographic Monocle"],
+        B: ["Aegis Neuro-Crown", "Paladin Greathelm"],
+        A: ["Chrono-Sensor Visor", "Crown of the Wind-Walker"],
+        S: ["AI Overlord Neuro-Matrix", "Arch-Mage Diadem of Eternity"]
+      },
+      body: {
+        E: ["Ragged Vest", "Fibre Coat"],
+        D: ["Flak Jacket", "Leather Chestplate"],
+        C: ["Nanofiber Mesh", "Hardened Chainmail"],
+        B: ["Titanium Plate Vest", "Mithril Hauberk"],
+        A: ["Powered Exoskeleton Frame", "Runic Arch-Mage Robes"],
+        S: ["Quantum Shift Warp Armor", "Dragonscale Primordial Plate"]
+      },
+      feet: {
+        E: ["Worn Boots", "Scrap Sandals"],
+        D: ["Steel-Toed Boots", "Silent Sneakers"],
+        C: ["Kinetic Springs", "Reinforced Greaves"],
+        B: ["Magnetic Hover-Soles", "Swift-Wing Boots"],
+        A: ["Phase-Shift Boots", "Greaves of the Titan"],
+        S: ["Gravity Anchor Soles", "Hermetic Rift Treads"]
+      },
+      accessory: {
+        E: ["Rusty Copper Ring", "Dull Necklace"],
+        D: ["Laser Pointer", "Silver Ring of Focus"],
+        C: ["Bio-Scanner Bracelet", "Mana Crystal Pendant"],
+        B: ["Shield Generator Ring", "Amulet of Health"],
+        A: ["Gravity Manipulator Ring", "Pendant of Power"],
+        S: ["Singularity Core Loop", "Eye of the Void Necklace"]
+      }
+    };
+
+    const newItems = Array.from({ length: 3 }).map((_, idx) => {
+      const slot = slots[Math.floor(Math.random() * slots.length)];
+      const grade = rollGrade();
+      const names = itemNames[slot][grade];
+      const name = names[Math.floor(Math.random() * names.length)];
+      
+      let strength = 0, agility = 0, intelligence = 0;
+      const boostVal = { E: 1, D: 2, C: 4, B: 6, A: 9, S: 15 }[grade];
+      const stats: Array<'strength' | 'agility' | 'intelligence'> = ['strength', 'agility', 'intelligence'];
+      const primaryStat = stats[Math.floor(Math.random() * stats.length)];
+      
+      if (primaryStat === 'strength') strength = boostVal;
+      if (primaryStat === 'agility') agility = boostVal;
+      if (primaryStat === 'intelligence') intelligence = boostVal;
+
+      const baseCost = { E: 20, D: 45, C: 90, B: 170, A: 300, S: 500 }[grade];
+      const cost = Math.floor(baseCost * (0.9 + Math.random() * 0.2));
+
+      return {
+        id: `item_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`,
+        name,
+        slot,
+        grade,
+        statBoost: {
+          ...(strength > 0 && { strength }),
+          ...(agility > 0 && { agility }),
+          ...(intelligence > 0 && { intelligence })
+        },
+        cost
+      };
+    });
+
+    return newItems;
+  };
 
   const modifyStat = (stat: 'strength' | 'agility' | 'intelligence', quantity: number) => {
     if (quantity > 0 && pointsLeft > 0) {
@@ -121,6 +254,10 @@ export default function InfiniteQuest() {
     setSelectedSetting(settingName);
     setScore(0);
     setEarnedPoints(0);
+    setGold(100);
+    setEquipment({ head: null, body: null, feet: null, accessory: null });
+    setShopItems(generateShopItems());
+    setTab('story');
     
     const pool = NARRATIVE_POOLS[settingName];
     const initialText = `The chronicle of ${char.name} the ${char.class} begins inside ${pool.locations[0]}. Suddenly, ${pool.hazards[0]}! What is your immediate course of action?`;
@@ -144,6 +281,9 @@ export default function InfiniteQuest() {
       setChar(prev => ({ ...prev, health: newHealth }));
       
       const resolutionText = `[REST] You chose to: "${choice.text}". You set up a secure camp and restore ${healAmount} Vitality points. (Health is now ${newHealth}/100).`;
+      
+      // Restock shop
+      setShopItems(generateShopItems());
       
       // Check if next room is a Boss room (every 5 rooms)
       const isNextBoss = (score > 0 && score % 5 === 0);
@@ -178,7 +318,7 @@ export default function InfiniteQuest() {
     // Calculate Stat Check Success
     let playerStatValue = 10; // Default general challenge modifier
     if (choice.statType !== 'general') {
-      playerStatValue = char[choice.statType];
+      playerStatValue = getStat(choice.statType);
     }
     
     // Add a small local random dice roll (1 to 6) to mimic a true tabletop RPG challenge
@@ -197,24 +337,33 @@ export default function InfiniteQuest() {
       setScore(nextScore);
       
       let rewardText = "";
+      let goldGain = 0;
       if (isBossChoice) {
-        setEarnedPoints(prev => prev + 5); // 5 points for boss!
+        const bossPoints = Math.floor(Math.random() * 4) + 4; // 4 to 7 points
+        setEarnedPoints(prev => prev + bossPoints);
         const heal = 30;
         setChar(prev => ({ ...prev, health: Math.min(100, prev.health + heal) }));
-        rewardText = `You defeated the Boss! You earned 5 Attribute Upgrade Points and restored ${heal} Vitality`;
+        goldGain = Math.floor(Math.random() * 51) + 50; // 50-100 gold
+        setGold(prev => prev + goldGain);
+        rewardText = `You defeated the Boss! You earned ${bossPoints} Attribute Upgrade Points, gained ${goldGain} Gold, and restored ${heal} Vitality`;
       } else {
-        setEarnedPoints(prev => prev + 2); // 2 points for regular success
-        rewardText = pool.rewards[Math.floor(Math.random() * pool.rewards.length)];
+        // Regular room successes do NOT grant points anymore
+        goldGain = Math.floor(Math.random() * 11) + 15; // 15-25 gold
+        setGold(prev => prev + goldGain);
+        rewardText = `${pool.rewards[Math.floor(Math.random() * pool.rewards.length)]} (Gained +${goldGain} Gold)`;
       }
       resolutionText = `[SUCCESS] You chose to: "${choice.text}". Your ${choice.statType.toUpperCase()} trait held strong! (Rolled ${totalRoll} vs Diff ${choice.difficulty}). You expertly bypass the threat, and ${rewardText}.`;
     } else {
       let failDamage = 0;
+      let goldLoss = 0;
       if (isBossChoice) {
         failDamage = Math.floor(Math.random() * 20) + 20; // 20-40 damage for boss!
         resolutionText = `[FAILURE] You tried to: "${choice.text}". The Boss completely overwhelmed you! (Rolled ${totalRoll} vs Diff ${choice.difficulty}). You take a devastating blow, losing ${failDamage} Vitality points.`;
       } else {
         failDamage = Math.floor(Math.random() * 15) + 10; // 10-25 damage
-        resolutionText = `[FAILURE] You tried to: "${choice.text}". However, the scenario outmatched your raw attributes... (Rolled ${totalRoll} vs Diff ${choice.difficulty}). You take a heavy hit, losing ${failDamage} Vitality points.`;
+        goldLoss = Math.floor(Math.random() * 6) + 5; // 5-10 gold loss on failure
+        setGold(prev => Math.max(0, prev - goldLoss));
+        resolutionText = `[FAILURE] You tried to: "${choice.text}". However, the scenario outmatched your raw attributes... (Rolled ${totalRoll} vs Diff ${choice.difficulty}). You take a heavy hit, losing ${failDamage} Vitality points and ${goldLoss} Gold.`;
       }
       healthDamage = failDamage;
     }
@@ -229,6 +378,9 @@ export default function InfiniteQuest() {
       setCurrentChoices([]); // Wipe choices out to show game over state
       return;
     }
+
+    // Restock shop
+    setShopItems(generateShopItems());
 
     // Check if next room should be a Boss room (every 5 rooms)
     const isNextBoss = (nextScore > 0 && nextScore % 5 === 0);
@@ -562,6 +714,10 @@ export default function InfiniteQuest() {
               <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
                 <div className="bg-red-500 h-full transition-all" style={{ width: `${char.health}%` }}></div>
               </div>
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="flex items-center gap-1.5 text-slate-400">🪙 Credits / Gold</span>
+                <span className="font-bold text-yellow-400">{gold}g</span>
+              </div>
             </div>
 
              <div className="border-t border-slate-800 pt-3 space-y-2 text-xs">
@@ -573,7 +729,9 @@ export default function InfiniteQuest() {
               <div className="flex justify-between items-center h-6">
                 <span className="text-slate-400">Strength:</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-200">{char.strength}</span>
+                  <span className={`font-bold ${isStatBoosted('strength') ? 'text-amber-400 font-black' : 'text-slate-200'}`}>
+                    {getStat('strength')} {isStatBoosted('strength') && `(${char.strength})`}
+                  </span>
                   {earnedPoints > 0 && (
                     <button
                       onClick={() => {
@@ -591,7 +749,9 @@ export default function InfiniteQuest() {
               <div className="flex justify-between items-center h-6">
                 <span className="text-slate-400">Agility:</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-200">{char.agility}</span>
+                  <span className={`font-bold ${isStatBoosted('agility') ? 'text-amber-400 font-black' : 'text-slate-200'}`}>
+                    {getStat('agility')} {isStatBoosted('agility') && `(${char.agility})`}
+                  </span>
                   {earnedPoints > 0 && (
                     <button
                       onClick={() => {
@@ -609,7 +769,9 @@ export default function InfiniteQuest() {
               <div className="flex justify-between items-center h-6">
                 <span className="text-slate-400">Intelligence:</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-200">{char.intelligence}</span>
+                  <span className={`font-bold ${isStatBoosted('intelligence') ? 'text-amber-400 font-black' : 'text-slate-200'}`}>
+                    {getStat('intelligence')} {isStatBoosted('intelligence') && `(${char.intelligence})`}
+                  </span>
                   {earnedPoints > 0 && (
                     <button
                       onClick={() => {
@@ -636,6 +798,10 @@ export default function InfiniteQuest() {
                 setView('create');
                 setPointsLeft(10);
                 setEarnedPoints(0);
+                setGold(100);
+                setEquipment({ head: null, body: null, feet: null, accessory: null });
+                setShopItems([]);
+                setTab('story');
                 setChar({
                   name: '',
                   class: 'Tech Nomad',
@@ -651,58 +817,205 @@ export default function InfiniteQuest() {
               <RotateCcw className="w-3.5 h-3.5" /> Reset Simulation
             </button>
           </div>
+          </div>
 
           {/* Interactive display output stream panel */}
           <div className="md:col-span-3 space-y-4 flex flex-col justify-between">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl min-h-[420px] flex flex-col justify-between shadow-lg overflow-hidden">
-              {/* Story graphic banner */}
-              <div className="w-full h-40 bg-slate-950 border-b border-slate-800 relative overflow-hidden flex items-center justify-center">
-                {renderStoryGraphic()}
-              </div>
-              
-              {/* Story text display */}
-              <div className="p-6 flex-1 flex flex-col justify-start overflow-y-auto">
-                <span className="text-[10px] uppercase bg-slate-950 border border-slate-800 px-2 py-0.5 rounded text-slate-500 w-fit mb-4 tracking-wider font-mono">
-                  CURRENT CHRONICLE NODE // {selectedSetting.toUpperCase()}
-                </span>
-                <p className="text-sm leading-relaxed text-slate-300 font-mono whitespace-pre-line">
-                  {storyText}
-                </p>
-              </div>
+            {/* Simulation Tabs */}
+            <div className="flex gap-2 border-b border-slate-800 pb-2">
+              <button
+                onClick={() => setTab('story')}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg transition-all ${
+                  tab === 'story'
+                    ? 'bg-slate-900 border-t border-x border-slate-800 text-purple-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                🎮 Chronicle Simulation
+              </button>
+              <button
+                onClick={() => setTab('shop')}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg transition-all relative ${
+                  tab === 'shop'
+                    ? 'bg-slate-900 border-t border-x border-slate-800 text-purple-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                🛒 Matrix Shop & Armory
+                {gold >= 20 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-500 rounded-full animate-ping" />}
+              </button>
             </div>
 
-            {/* Dynamic Action Matrix Layout */}
-            <div className="grid grid-cols-1 gap-2.5">
-              {currentChoices.length > 0 ? (
-                currentChoices.map((choice, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => handleAction(choice)}
-                    className={`w-full text-left text-xs p-3.5 bg-slate-900 hover:bg-slate-850 border rounded-lg text-slate-300 transition-all font-mono flex justify-between items-center group ${
-                      choice.statType === 'rest' 
-                        ? 'border-emerald-900/45 hover:border-emerald-500/40 hover:text-emerald-300' 
-                        : 'border-slate-800 hover:border-purple-900/40 hover:text-purple-300'
-                    }`}
-                  >
-                    <span>
-                      {choice.statType === 'rest' ? '⛺ ' : '🎯 '}
-                      {choice.text}
+            {tab === 'story' ? (
+              <>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl min-h-[420px] flex flex-col justify-between shadow-lg overflow-hidden">
+                  {/* Story graphic banner */}
+                  <div className="w-full h-40 bg-slate-950 border-b border-slate-800 relative overflow-hidden flex items-center justify-center">
+                    {renderStoryGraphic()}
+                  </div>
+                  
+                  {/* Story text display */}
+                  <div className="p-6 flex-1 flex flex-col justify-start overflow-y-auto">
+                    <span className="text-[10px] uppercase bg-slate-950 border border-slate-800 px-2 py-0.5 rounded text-slate-500 w-fit mb-4 tracking-wider font-mono">
+                      CURRENT CHRONICLE NODE // {selectedSetting.toUpperCase()}
                     </span>
-                    <span className={`text-[10px] uppercase bg-slate-950 px-2 py-0.5 rounded border text-slate-500 group-hover:text-purple-400 transition-colors ${
-                      choice.statType === 'rest' 
-                        ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300' 
-                        : 'border-slate-800'
-                    }`}>
-                      {choice.statType === 'rest' ? 'HEAL / REST' : `${choice.statType} (Diff: ${choice.difficulty})`}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="bg-red-950/20 border border-red-900/40 text-red-400 text-center rounded-lg p-4 font-mono text-sm font-semibold">
-                  💀 Simulation Terminated. Click Reset Simulation on the sidebar to challenge the matrix again.
+                    <p className="text-sm leading-relaxed text-slate-300 font-mono whitespace-pre-line">
+                      {storyText}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Dynamic Action Matrix Layout */}
+                <div className="grid grid-cols-1 gap-2.5">
+                  {currentChoices.length > 0 ? (
+                    currentChoices.map((choice, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => handleAction(choice)}
+                        className={`w-full text-left text-xs p-3.5 bg-slate-900 hover:bg-slate-850 border rounded-lg text-slate-300 transition-all font-mono flex justify-between items-center group ${
+                          choice.statType === 'rest' 
+                            ? 'border-emerald-900/45 hover:border-emerald-500/40 hover:text-emerald-300' 
+                            : 'border-slate-800 hover:border-purple-900/40 hover:text-purple-300'
+                        }`}
+                      >
+                        <span>
+                          {choice.statType === 'rest' ? '⛺ ' : '🎯 '}
+                          {choice.text}
+                        </span>
+                        <span className={`text-[10px] uppercase bg-slate-950 px-2 py-0.5 rounded border text-slate-500 group-hover:text-purple-400 transition-colors ${
+                          choice.statType === 'rest' 
+                            ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300' 
+                            : 'border-slate-800'
+                        }`}>
+                          {choice.statType === 'rest' ? 'HEAL / REST' : `${choice.statType} (Diff: ${choice.difficulty})`}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="bg-red-950/20 border border-red-900/40 text-red-400 text-center rounded-lg p-4 font-mono text-sm font-semibold">
+                      💀 Simulation Terminated. Click Reset Simulation on the sidebar to challenge the matrix again.
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 min-h-[490px] flex flex-col justify-between shadow-lg">
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider font-mono">Matrix Shop & Armory</h2>
+                    <span className="text-xs font-bold text-yellow-400 bg-yellow-950/50 px-3 py-1 rounded border border-yellow-800 flex items-center gap-1.5 font-mono">
+                      🪙 {gold} Gold
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column: Gear */}
+                    <div className="space-y-4 border-r border-slate-800 pr-0 md:pr-6">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Equipped Gear</h3>
+                      
+                      {([
+                        { slotName: 'head', displayName: '👤 Head Unit' },
+                        { slotName: 'body', displayName: '🛡️ Torso Shell' },
+                        { slotName: 'feet', displayName: '⚡ Thrusters / Boots' },
+                        { slotName: 'accessory', displayName: '🔮 Accessory Core' }
+                      ] as const).map(({ slotName, displayName }) => {
+                        const item = equipment[slotName];
+                        return (
+                          <div key={slotName} className="p-3 bg-slate-950/80 border border-slate-850 rounded-lg flex justify-between items-center font-mono">
+                            <div>
+                              <span className="text-[10px] text-slate-500 uppercase font-semibold">{displayName}</span>
+                              {item ? (
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded ${
+                                    { E: 'bg-slate-800 text-slate-300', D: 'bg-emerald-950 text-emerald-400', C: 'bg-sky-950 text-sky-400', B: 'bg-indigo-950 text-indigo-400', A: 'bg-amber-950 text-amber-500', S: 'bg-pink-950 text-pink-500' }[item.grade]
+                                  }`}>
+                                    {item.grade}
+                                  </span>
+                                  <span className="text-xs font-bold text-slate-200">{item.name}</span>
+                                </div>
+                              ) : (
+                                <div className="text-xs text-slate-500 italic mt-0.5">Empty Slot</div>
+                              )}
+                            </div>
+                            {item && (
+                              <div className="flex items-center gap-3">
+                                <span className="text-[10px] text-purple-400 font-bold">
+                                  {Object.entries(item.statBoost).map(([k, v]) => `+${v} ${k.slice(0, 3).toUpperCase()}`).join(', ')}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    setEquipment(prev => ({ ...prev, [slotName]: null }));
+                                    setGold(prev => prev + Math.floor(item.cost / 2));
+                                  }}
+                                  className="text-[10px] text-red-400 hover:text-red-300 hover:underline transition-colors"
+                                >
+                                  Sell ({Math.floor(item.cost / 2)}g)
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right Column: Shop Cache */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Merchant Cache</h3>
+                      
+                      {shopItems.length > 0 ? (
+                        shopItems.map((item) => {
+                          const canBuy = gold >= item.cost;
+                          const gradeColor = {
+                            E: 'text-slate-400 border-slate-800 bg-slate-950/50',
+                            D: 'text-emerald-400 border-emerald-950/50 bg-emerald-950/10',
+                            C: 'text-sky-400 border-sky-950/50 bg-sky-950/10',
+                            B: 'text-indigo-400 border-indigo-950/50 bg-indigo-950/10',
+                            A: 'text-amber-500 border-amber-950/50 bg-amber-950/10',
+                            S: 'text-pink-500 border-pink-950/50 bg-pink-950/10 animate-pulse'
+                          }[item.grade];
+
+                          return (
+                            <div key={item.id} className={`p-3 border rounded-lg flex justify-between items-center font-mono ${gradeColor}`}>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] uppercase font-black opacity-60">[{item.slot}]</span>
+                                  <span className="text-xs font-bold">{item.name}</span>
+                                </div>
+                                <div className="text-[10px] mt-1 opacity-90 font-bold">
+                                  Boost: {Object.entries(item.statBoost).map(([k, v]) => `+${v} ${k.slice(0, 3).toUpperCase()}`).join(', ')}
+                                </div>
+                              </div>
+                              <button
+                                disabled={!canBuy}
+                                onClick={() => {
+                                  let refund = 0;
+                                  const equipped = equipment[item.slot];
+                                  if (equipped) {
+                                    refund = Math.floor(equipped.cost / 2);
+                                  }
+                                  setGold(prev => prev - item.cost + refund);
+                                  setEquipment(prev => ({ ...prev, [item.slot]: item }));
+                                  setShopItems(prev => prev.filter(i => i.id !== item.id));
+                                }}
+                                className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
+                                  canBuy
+                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-slate-950 font-black shadow-md cursor-pointer'
+                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                }`}
+                              >
+                                🪙 {item.cost}g
+                              </button>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-xs text-slate-500 italic text-center pt-8 font-mono">Stock sold out. Restocks upon clearing or completing any room!</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
