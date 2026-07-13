@@ -18,14 +18,23 @@ interface Choice {
   text: string;
   statType: 'strength' | 'agility' | 'intelligence' | 'general' | 'rest';
   difficulty: number;
+  eventType?: string;
 }
 
 interface EquipmentItem {
   id: string;
   name: string;
-  slot: 'head' | 'body' | 'feet' | 'accessory';
+  slot: 'weapon' | 'head' | 'body' | 'feet' | 'accessory';
   grade: 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
   statBoost: { strength?: number; agility?: number; intelligence?: number };
+  cost: number;
+}
+
+interface Potion {
+  id: string;
+  name: string;
+  type: 'health' | 'stat' | 'gold';
+  description: string;
   cost: number;
 }
 
@@ -96,6 +105,36 @@ const BOSS_POOL = {
   }
 };
 
+const EVENT_POOL = [
+  {
+    title: "✨ Anomalous Datacore",
+    intro: "You stumble upon a floating, glowing Datacore that hums with raw matrix energy. It seems to contain uncorrupted archives of the simulator.",
+    actions: [
+      { text: "Attempt to siphon the core's energy directly", statType: "strength", difficulty: 12, eventType: "datacore_siphon" },
+      { text: "Inject a bypass script to download its payload", statType: "intelligence", difficulty: 11, eventType: "datacore_payload" },
+      { text: "Ignore the core to avoid security alerts", statType: "general", difficulty: 0, eventType: "datacore_ignore" }
+    ] as Choice[]
+  },
+  {
+    title: "🛒 Wandering Nano-Merchant",
+    intro: "A cloaked drone hovers near the debris, displaying a flickering hologram: 'CRITICAL CLEARANCE SALE. PROTOCOL OMEGA ACTIVE.'",
+    actions: [
+      { text: "Hack the merchant's encryption keys", statType: "agility", difficulty: 13, eventType: "merchant_hack" },
+      { text: "Purchase the mystery salvage container (Costs 40 Gold)", statType: "general", difficulty: 0, eventType: "merchant_buy" },
+      { text: "Scrap the drone for raw parts", statType: "strength", difficulty: 12, eventType: "merchant_scrap" }
+    ] as Choice[]
+  },
+  {
+    title: "🌀 Chrono-Synaptic Rift",
+    intro: "A tear in the simulation grid expands before you, revealing fragments of future timelines. A strange draft pulls at your consciousness.",
+    actions: [
+      { text: "Leap across the spatial event horizon", statType: "agility", difficulty: 14, eventType: "rift_leap" },
+      { text: "Stabilize the rift using your processor matrix", statType: "intelligence", difficulty: 13, eventType: "rift_stabilize" },
+      { text: "Safely step back and let the rift collapse", statType: "general", difficulty: 0, eventType: "rift_ignore" }
+    ] as Choice[]
+  }
+];
+
 export default function InfiniteQuest() {
   const [view, setView] = useState<ViewStep>('create');
   const [pointsLeft, setPointsLeft] = useState<number>(10);
@@ -119,17 +158,59 @@ export default function InfiniteQuest() {
   const [tab, setTab] = useState<'story' | 'shop'>('story');
   const [gold, setGold] = useState<number>(100);
   const [equipment, setEquipment] = useState<{
+    weapon: EquipmentItem | null;
     head: EquipmentItem | null;
     body: EquipmentItem | null;
     feet: EquipmentItem | null;
     accessory: EquipmentItem | null;
   }>({
+    weapon: null,
     head: null,
     body: null,
     feet: null,
     accessory: null,
   });
   const [shopItems, setShopItems] = useState<EquipmentItem[]>([]);
+  const [potions, setPotions] = useState<Potion[]>([]);
+
+  // Potion shop & belt actions
+  const buyPotion = (potionName: string, cost: number, type: Potion['type'], description: string) => {
+    if (gold < cost) return;
+    if (potions.length >= 3) return;
+    setGold(prev => prev - cost);
+    const newPotion: Potion = {
+      id: `potion_${Date.now()}_${Math.random()}`,
+      name: potionName,
+      type,
+      description,
+      cost
+    };
+    setPotions(prev => [...prev, newPotion]);
+  };
+
+  const consumePotion = (potionId: string) => {
+    const potion = potions.find(p => p.id === potionId);
+    if (!potion) return;
+    
+    let resolutionText = "";
+    if (potion.type === 'health') {
+      const heal = 35;
+      setChar(prev => ({ ...prev, health: Math.min(100, prev.health + heal) }));
+      resolutionText = `Consumed ${potion.name}: Restored ${heal} Vitality.`;
+    } else if (potion.type === 'stat') {
+      const stats: Array<'strength' | 'agility' | 'intelligence'> = ['strength', 'agility', 'intelligence'];
+      const rolledStat = stats[Math.floor(Math.random() * stats.length)];
+      setChar(prev => ({ ...prev, [rolledStat]: prev[rolledStat] + 1 }));
+      resolutionText = `Consumed ${potion.name}: Permanently upgraded base ${rolledStat.toUpperCase()} by +1.`;
+    } else if (potion.type === 'gold') {
+      const goldYield = Math.floor(Math.random() * 81) + 20;
+      setGold(prev => prev + goldYield);
+      resolutionText = `Consumed ${potion.name}: Transmuted into ${goldYield} Gold.`;
+    }
+
+    setStoryText(prev => `${prev}\n\n🧪 [POTION USE] ${resolutionText}`);
+    setPotions(prev => prev.filter(p => p.id !== potionId));
+  };
 
   // Calculate combat stats including equipment boosts
   const getStat = (stat: 'strength' | 'agility' | 'intelligence') => {
@@ -149,7 +230,7 @@ export default function InfiniteQuest() {
 
   // Generate 3 random shop items based on weighted rarity
   const generateShopItems = () => {
-    const slots: Array<EquipmentItem['slot']> = ['head', 'body', 'feet', 'accessory'];
+    const slots: Array<EquipmentItem['slot']> = ['weapon', 'head', 'body', 'feet', 'accessory'];
     const grades: Array<{ grade: EquipmentItem['grade']; weight: number }> = [
       { grade: 'E', weight: 50 },
       { grade: 'D', weight: 25 },
@@ -170,6 +251,14 @@ export default function InfiniteQuest() {
     };
 
     const itemNames = {
+      weapon: {
+        E: ["Dull Dagger", "Rusty Pipe"],
+        D: ["Laser Pistol", "Steel Sword"],
+        C: ["Plasma Cutter", "Runic Blade"],
+        B: ["Charged Energy Rifle", "Mithril Greatsword"],
+        A: ["Gravity Disruptor", "Void Slayer Claymore"],
+        S: ["Singularity Railgun", "Excalibur Prime"]
+      },
       head: {
         E: ["Scrap Goggles", "Worn Cap"],
         D: ["Reinforced Visor", "Tactical Helmet"],
@@ -255,8 +344,9 @@ export default function InfiniteQuest() {
     setScore(0);
     setEarnedPoints(0);
     setGold(100);
-    setEquipment({ head: null, body: null, feet: null, accessory: null });
+    setEquipment({ weapon: null, head: null, body: null, feet: null, accessory: null });
     setShopItems(generateShopItems());
+    setPotions([]);
     setTab('story');
     
     const pool = NARRATIVE_POOLS[settingName];
@@ -269,10 +359,192 @@ export default function InfiniteQuest() {
     setView('game');
   };
 
-  // THE RECURSIVE ENGINE: RUNS ON EVERY SINGLE CHOICE CLICK
+  const handleEventAction = (choice: Choice) => {
+    if (!selectedSetting) return;
+    const pool = NARRATIVE_POOLS[selectedSetting];
+    
+    let playerStatValue = 10;
+    if (choice.statType !== 'general') {
+      playerStatValue = getStat(choice.statType);
+    }
+    
+    const diceRoll = Math.floor(Math.random() * 6) + 1;
+    const totalRoll = playerStatValue + diceRoll;
+    const isSuccess = totalRoll >= choice.difficulty;
+    
+    let resolutionText = "";
+    let healthChange = 0;
+    let goldChange = 0;
+    let pointChange = 0;
+    let equipmentEarned: EquipmentItem | null = null;
+    let potionEarned: Potion | null = null;
+
+    switch(choice.eventType) {
+      case "datacore_siphon":
+        if (isSuccess) {
+          healthChange = 25;
+          resolutionText = `[SUCCESS] You siphon the Datacore's backup grids, recharging your bio-cells (+25 Vitality).`;
+        } else {
+          healthChange = -15;
+          resolutionText = `[FAILURE] The Datacore's protective shielding discharges a feedback loop (-15 Vitality).`;
+        }
+        break;
+      case "datacore_payload":
+        if (isSuccess) {
+          const items = generateShopItems();
+          equipmentEarned = items[0];
+          resolutionText = `[SUCCESS] You extract a cache of high-tier gear data, fabricating a new item: ${equipmentEarned.name} (${equipmentEarned.grade}-Grade).`;
+        } else {
+          healthChange = -10;
+          resolutionText = `[FAILURE] The Datacore's firewall detects your bypass, launching a neuro-drain countermeasure (-10 Vitality).`;
+        }
+        break;
+      case "datacore_ignore":
+        resolutionText = `You bypass the Datacore safely, leaving its secrets intact.`;
+        break;
+        
+      case "merchant_hack":
+        if (isSuccess) {
+          goldChange = 80;
+          resolutionText = `[SUCCESS] You bypass the drone's security grid, forcing its transaction channels to dump +80 Gold.`;
+        } else {
+          healthChange = -20;
+          resolutionText = `[FAILURE] The drone locks its compartments and releases defense spikes (-20 Vitality).`;
+        }
+        break;
+      case "merchant_buy":
+        if (gold >= 40) {
+          goldChange = -40;
+          if (Math.random() < 0.5) {
+            const items = generateShopItems();
+            equipmentEarned = items[0];
+            resolutionText = `You purchase the mystery crate. Inside you uncover: ${equipmentEarned.name} (${equipmentEarned.grade}-Grade).`;
+          } else {
+            const potTypes = [
+              { name: "Vitality Elixir", type: "health" as const, desc: "Heals 35 Vitality on use" },
+              { name: "Alchemist Liquid", type: "gold" as const, desc: "Yields 20-100 Gold" },
+              { name: "Core Mutagen", type: "stat" as const, desc: "Permanent +1 to a random base stat" }
+            ];
+            const pot = potTypes[Math.floor(Math.random() * potTypes.length)];
+            potionEarned = {
+              id: `potion_${Date.now()}_${Math.random()}`,
+              name: pot.name,
+              type: pot.type,
+              description: pot.desc,
+              cost: 0
+            };
+            resolutionText = `You purchase the mystery crate. Inside you find a: ${potionEarned.name} (${potionEarned.description}).`;
+          }
+        } else {
+          resolutionText = `You don't have enough Gold! The drone scolds you and flies away.`;
+        }
+        break;
+      case "merchant_scrap":
+        if (isSuccess) {
+          goldChange = 30;
+          resolutionText = `[SUCCESS] You smash the drone with force, salvaging high-grade raw processors (+30 Gold).`;
+        } else {
+          healthChange = -10;
+          resolutionText = `[FAILURE] The drone dodges your smash and zaps you before self-destructing (-10 Vitality).`;
+        }
+        break;
+        
+      case "rift_leap":
+        if (isSuccess) {
+          pointChange = 3;
+          resolutionText = `[SUCCESS] You vault cleanly through the rift's center, absorbing temporal equations. You gain +3 Attribute Points!`;
+        } else {
+          healthChange = -25;
+          resolutionText = `[FAILURE] The rift borders collapse as you jump, crushing your structural parameters (-25 Vitality).`;
+        }
+        break;
+      case "rift_stabilize":
+        if (isSuccess) {
+          goldChange = 50;
+          const items = generateShopItems();
+          equipmentEarned = items[0];
+          resolutionText = `[SUCCESS] You stabilize the rift, materializing a localized gear drop: ${equipmentEarned.name} (${equipmentEarned.grade}-Grade) and +50 Gold.`;
+        } else {
+          healthChange = -15;
+          resolutionText = `[FAILURE] Your mind is flooded with static as the rift collapses violently (-15 Vitality).`;
+        }
+        break;
+      case "rift_ignore":
+        resolutionText = `You step back and let the tear collapse into space.`;
+        break;
+        
+      default:
+        resolutionText = `The anomaly fades back into the background grid.`;
+        break;
+    }
+
+    if (goldChange !== 0) setGold(prev => Math.max(0, prev + goldChange));
+    if (pointChange > 0) setEarnedPoints(prev => prev + pointChange);
+    
+    let currentHealth = char.health;
+    if (healthChange > 0) {
+      currentHealth = Math.min(100, char.health + healthChange);
+      setChar(prev => ({ ...prev, health: currentHealth }));
+    } else if (healthChange < 0) {
+      currentHealth = Math.max(0, char.health + healthChange);
+      setChar(prev => ({ ...prev, health: currentHealth }));
+    }
+
+    if (equipmentEarned) {
+      let refundText = "";
+      const currentEquipped = equipment[equipmentEarned.slot];
+      if (currentEquipped) {
+        const refund = Math.floor(currentEquipped.cost / 2);
+        setGold(prev => prev + refund);
+        refundText = ` (Your old ${equipmentEarned.slot} was sold for +${refund} Gold).`;
+      }
+      setEquipment(prev => ({ ...prev, [equipmentEarned!.slot]: equipmentEarned }));
+      resolutionText += `${refundText}`;
+    }
+
+    if (potionEarned) {
+      if (potions.length < 3) {
+        setPotions(prev => [...prev, potionEarned!]);
+      } else {
+        setGold(prev => prev + 15);
+        resolutionText += ` (Your Potion Belt was full, so the potion was auto-salvaged for +15 Gold).`;
+      }
+    }
+
+    if (currentHealth <= 0) {
+      setStoryText(`${resolutionText} The anomalies of the matrix have dissolved your parameters. ${char.name} has fallen. Your final score: ${score} encounters completed.`);
+      setCurrentChoices([]);
+      return;
+    }
+
+    const nextLocation = pool.locations[Math.floor(Math.random() * pool.locations.length)];
+    const nextHazard = pool.hazards[Math.floor(Math.random() * pool.hazards.length)];
+    const nextChapterText = `\n\nMoving forward, you navigate deeper into ${nextLocation}. Before you can catch your breath, ${nextHazard}!`;
+    setStoryText(resolutionText + nextChapterText);
+
+    const regularChoices = [...pool.actions].sort(() => 0.5 - Math.random()) as Choice[];
+    let choices = regularChoices.slice(0, 3);
+    const shouldOfferRest = currentHealth < 40 || (currentHealth < 70 && Math.random() < 0.4);
+    if (shouldOfferRest) {
+      const restOptions = [
+        { text: "Set up a temporary shelter and tend to your wounds", statType: "rest", difficulty: 0 },
+        { text: "Consume an emergency ration pack and rest in the shadows", statType: "rest", difficulty: 0 },
+        { text: "Take a brief moment to catch your breath and recuperate", statType: "rest", difficulty: 0 }
+      ] as Choice[];
+      choices[2] = restOptions[Math.floor(Math.random() * restOptions.length)];
+    }
+    setCurrentChoices(choices);
+    setShopItems(generateShopItems());
+  };
+
   const handleAction = (choice: Choice) => {
     if (!selectedSetting) return;
     const pool = NARRATIVE_POOLS[selectedSetting];
+    
+    if (choice.eventType) {
+      handleEventAction(choice);
+      return;
+    }
     
     // Check if this is a rest choice
     if (choice.statType === 'rest') {
@@ -285,13 +557,19 @@ export default function InfiniteQuest() {
       // Restock shop
       setShopItems(generateShopItems());
       
-      // Check if next room is a Boss room (every 5 rooms)
+      // Check if next room is a Boss room (every 5 rooms) or Anomaly Event (25% chance)
       const isNextBoss = (score > 0 && score % 5 === 0);
+      const triggerEvent = !isNextBoss && Math.random() < 0.25;
+      
       if (isNextBoss) {
         const boss = BOSS_POOL[selectedSetting];
         const bossText = `\n\n🚨 BOSS ENCOUNTER! 🚨\nYou enter a new area. ${boss.intro}`;
         setStoryText(resolutionText + bossText);
         setCurrentChoices(boss.actions);
+      } else if (triggerEvent) {
+        const randomEvent = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
+        setStoryText(resolutionText + `\n\n🔮 ANOMALY EVENT: ${randomEvent.title} 🔮\n${randomEvent.intro}`);
+        setCurrentChoices(randomEvent.actions);
       } else {
         const nextLocation = pool.locations[Math.floor(Math.random() * pool.locations.length)];
         const nextHazard = pool.hazards[Math.floor(Math.random() * pool.hazards.length)];
@@ -382,13 +660,19 @@ export default function InfiniteQuest() {
     // Restock shop
     setShopItems(generateShopItems());
 
-    // Check if next room should be a Boss room (every 5 rooms)
+    // Check if next room should be a Boss room (every 5 rooms) or Anomaly Event (25% chance)
     const isNextBoss = (nextScore > 0 && nextScore % 5 === 0);
+    const triggerEvent = !isNextBoss && Math.random() < 0.25;
+    
     if (isNextBoss) {
       const boss = BOSS_POOL[selectedSetting];
       const bossText = `\n\n🚨 BOSS ENCOUNTER! 🚨\nYou enter a new area. ${boss.intro}`;
       setStoryText(resolutionText + bossText);
       setCurrentChoices(boss.actions);
+    } else if (triggerEvent) {
+      const randomEvent = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
+      setStoryText(resolutionText + `\n\n🔮 ANOMALY EVENT: ${randomEvent.title} 🔮\n${randomEvent.intro}`);
+      setCurrentChoices(randomEvent.actions);
     } else {
       const nextLocation = pool.locations[Math.floor(Math.random() * pool.locations.length)];
       const nextHazard = pool.hazards[Math.floor(Math.random() * pool.hazards.length)];
@@ -788,6 +1072,30 @@ export default function InfiniteQuest() {
               </div>
             </div>
 
+            <div className="border-t border-slate-800 pt-3 space-y-2">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">🧪 Potion Belt (Max 3)</div>
+              {potions.length > 0 ? (
+                <div className="space-y-1.5">
+                  {potions.map((potion) => (
+                    <div key={potion.id} className="flex justify-between items-center bg-slate-950/60 border border-slate-850 px-2 py-1.5 rounded text-xs font-mono">
+                      <div>
+                        <div className="font-bold text-slate-350">{potion.name}</div>
+                        <div className="text-[9px] text-slate-500">{potion.description}</div>
+                      </div>
+                      <button
+                        onClick={() => consumePotion(potion.id)}
+                        className="bg-purple-950 border border-purple-800 hover:bg-purple-900 text-purple-300 text-[10px] px-2 py-0.5 rounded font-black transition-colors"
+                      >
+                        Drink
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[10px] text-slate-500 italic font-mono">No potions carried. Buy them from the Matrix Shop!</div>
+              )}
+            </div>
+
             <div className="border-t border-slate-800 pt-3 text-center">
               <div className="text-[10px] text-slate-500 uppercase font-semibold">Rooms Cleared</div>
               <div className="text-2xl font-black text-purple-400">{score}</div>
@@ -799,8 +1107,9 @@ export default function InfiniteQuest() {
                 setPointsLeft(10);
                 setEarnedPoints(0);
                 setGold(100);
-                setEquipment({ head: null, body: null, feet: null, accessory: null });
+                setEquipment({ weapon: null, head: null, body: null, feet: null, accessory: null });
                 setShopItems([]);
+                setPotions([]);
                 setTab('story');
                 setChar({
                   name: '',
@@ -913,6 +1222,7 @@ export default function InfiniteQuest() {
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Equipped Gear</h3>
                       
                       {([
+                        { slotName: 'weapon', displayName: '⚔️ Primary Weapon' },
                         { slotName: 'head', displayName: '👤 Head Unit' },
                         { slotName: 'body', displayName: '🛡️ Torso Shell' },
                         { slotName: 'feet', displayName: '⚡ Thrusters / Boots' },
@@ -958,60 +1268,95 @@ export default function InfiniteQuest() {
                     </div>
 
                     {/* Right Column: Shop Cache */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Merchant Cache</h3>
-                      
-                      {shopItems.length > 0 ? (
-                        shopItems.map((item) => {
-                          const canBuy = gold >= item.cost;
-                          const gradeColor = {
-                            E: 'text-slate-400 border-slate-800 bg-slate-950/50',
-                            D: 'text-emerald-400 border-emerald-950/50 bg-emerald-950/10',
-                            C: 'text-sky-400 border-sky-950/50 bg-sky-950/10',
-                            B: 'text-indigo-400 border-indigo-950/50 bg-indigo-950/10',
-                            A: 'text-amber-500 border-amber-950/50 bg-amber-950/10',
-                            S: 'text-pink-500 border-pink-950/50 bg-pink-950/10 animate-pulse'
-                          }[item.grade];
+                    <div className="space-y-4">
+                      {/* Gear Cache */}
+                      <div className="space-y-2">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Merchant Cache (Gear)</h3>
+                        
+                        {shopItems.length > 0 ? (
+                          shopItems.map((item) => {
+                            const canBuy = gold >= item.cost;
+                            const gradeColor = {
+                              E: 'text-slate-400 border-slate-800 bg-slate-950/50',
+                              D: 'text-emerald-400 border-emerald-950/50 bg-emerald-950/10',
+                              C: 'text-sky-400 border-sky-950/50 bg-sky-950/10',
+                              B: 'text-indigo-400 border-indigo-950/50 bg-indigo-950/10',
+                              A: 'text-amber-500 border-amber-950/50 bg-amber-950/10',
+                              S: 'text-pink-500 border-pink-950/50 bg-pink-950/10 animate-pulse'
+                            }[item.grade];
 
-                          return (
-                            <div key={item.id} className={`p-3 border rounded-lg flex justify-between items-center font-mono ${gradeColor}`}>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[9px] uppercase font-black opacity-60">[{item.slot}]</span>
-                                  <span className="text-xs font-bold">{item.name}</span>
+                            return (
+                              <div key={item.id} className={`p-3 border rounded-lg flex justify-between items-center font-mono ${gradeColor}`}>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] uppercase font-black opacity-60">[{item.slot}]</span>
+                                    <span className="text-xs font-bold">{item.name}</span>
+                                  </div>
+                                  <div className="text-[10px] mt-1 opacity-90 font-bold">
+                                    Boost: {Object.entries(item.statBoost).map(([k, v]) => `+${v} ${k.slice(0, 3).toUpperCase()}`).join(', ')}
+                                  </div>
                                 </div>
-                                <div className="text-[10px] mt-1 opacity-90 font-bold">
-                                  Boost: {Object.entries(item.statBoost).map(([k, v]) => `+${v} ${k.slice(0, 3).toUpperCase()}`).join(', ')}
-                                </div>
+                                <button
+                                  disabled={!canBuy}
+                                  onClick={() => {
+                                    let refund = 0;
+                                    const equipped = equipment[item.slot];
+                                    if (equipped) {
+                                      refund = Math.floor(equipped.cost / 2);
+                                    }
+                                    setGold(prev => prev - item.cost + refund);
+                                    setEquipment(prev => ({ ...prev, [item.slot]: item }));
+                                    setShopItems(prev => prev.filter(i => i.id !== item.id));
+                                  }}
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
+                                    canBuy
+                                      ? 'bg-yellow-600 hover:bg-yellow-500 text-slate-950 font-black shadow-md cursor-pointer'
+                                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                  }`}
+                                >
+                                  🪙 {item.cost}g
+                                </button>
                               </div>
-                              <button
-                                disabled={!canBuy}
-                                onClick={() => {
-                                  let refund = 0;
-                                  const equipped = equipment[item.slot];
-                                  if (equipped) {
-                                    refund = Math.floor(equipped.cost / 2);
-                                  }
-                                  setGold(prev => prev - item.cost + refund);
-                                  setEquipment(prev => ({ ...prev, [item.slot]: item }));
-                                  setShopItems(prev => prev.filter(i => i.id !== item.id));
-                                }}
-                                className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
-                                  canBuy
-                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-slate-950 font-black shadow-md cursor-pointer'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                }`}
-                              >
-                                🪙 {item.cost}g
-                              </button>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-xs text-slate-500 italic text-center pt-8 font-mono">Stock sold out. Restocks upon clearing or completing any room!</div>
-                      )}
+                            );
+                          })
+                        ) : (
+                          <div className="text-xs text-slate-500 italic text-center py-4 font-mono">Stock sold out. Restocks upon clearing or completing any room!</div>
+                        )}
+                      </div>
+
+                      {/* Potions Cache */}
+                      <div className="space-y-2 border-t border-slate-800 pt-3">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Liquid Mutagen Cache</h3>
+                        <div className="grid grid-cols-1 gap-2">
+                          {[
+                            { name: "Vitality Elixir", cost: 25, type: 'health' as const, desc: "Restores 35 Vitality on use" },
+                            { name: "Alchemist Liquid", cost: 50, type: 'gold' as const, desc: "Gambles gold: yields 20g - 100g" },
+                            { name: "Core Mutagen", cost: 80, type: 'stat' as const, desc: "Permanently gains +1 to a random stat" }
+                          ].map((p, idx) => {
+                            const canBuy = gold >= p.cost && potions.length < 3;
+                            return (
+                              <div key={idx} className="p-2 border border-slate-850 bg-slate-950/40 rounded-lg flex justify-between items-center font-mono text-xs">
+                                <div>
+                                  <div className="font-bold text-slate-200">{p.name}</div>
+                                  <div className="text-[9px] text-slate-500">{p.desc}</div>
+                                </div>
+                                <button
+                                  disabled={!canBuy}
+                                  onClick={() => buyPotion(p.name, p.cost, p.type, p.desc)}
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
+                                    canBuy
+                                      ? 'bg-purple-900 hover:bg-purple-800 text-purple-200 cursor-pointer font-black'
+                                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                  }`}
+                                >
+                                  {potions.length >= 3 && gold >= p.cost ? 'Full' : `🪙 ${p.cost}g`}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                  </div>
                 </div>
               </div>
             )}
