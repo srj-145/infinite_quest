@@ -1023,11 +1023,7 @@ export default function InfiniteQuest() {
     const isGameOver = currentChoices.length === 0;
     const isBossActive = currentChoices.length > 0 && BOSS_POOL[selectedSetting]?.actions.some(a => a.text === currentChoices[0].text);
     const isRestingActive = currentChoices.length > 0 && currentChoices.some(c => c.statType === 'rest');
-    const floor = score + 1;   }
-          `}</style>
-        </svg>
-      );
-    }
+    const floor = score + 1;
     
     if (isGameOver) {
       return (
