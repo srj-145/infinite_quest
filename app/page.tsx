@@ -42,9 +42,72 @@ interface Potion {
 // DATA MATRICES FOR THE PROCEDURAL STORY TELLER
 const NARRATIVE_POOLS = {
   "🌌 Neon Core": {
-    locations: ["a rain-slicked cyber alleyway", "a glowing neon noodle bar", "an abandoned corporate mainframe server vault", "a black-market cyberware clinic", "the high-security elevator of Arasaka Tower"],
-    hazards: ["a squad of corporate security drones sweeps the zone", "a rogue AI starts frying the local grid overhead", "a group of street punks demands an entry toll", "a faulty terminal leaks high-voltage plasma lines"],
-    rewards: ["you find an encrypted datapad", "a sympathetic decker beams you a temporary power boost", "you discover a hidden access ventilation shaft"],
+    locations: [
+      "a rain-slicked cyber alleyway",
+      "a glowing neon noodle bar",
+      "an abandoned corporate mainframe server vault",
+      "a black-market cyberware clinic",
+      "the high-security elevator of Arasaka Tower",
+      "a dimly lit orbital shuttle deck",
+      "an underground synth-drug syndicate den",
+      "the high-voltage power substation grid",
+      "a luxury sky-high corporate penthouse balcony",
+      "an overgrown virtual-reality garden greenhouse",
+      "a chaotic netrunner terminal lounge",
+      "a toxic cyber-waste disposal dump site",
+      "the command deck of a military megacorp cruiser",
+      "a high-speed monorail roof hurtling downtown",
+      "a rusty sewer filtration pipeline under the city",
+      "a secret database archives bunker",
+      "a buzzing cybernetic repair dock",
+      "the central plaza of the neon marketplace",
+      "an automated drone assembly warehouse",
+      "a hidden safehouse shielded by static scramblers"
+    ],
+    hazards: [
+      "a squad of corporate security drones sweeps the zone",
+      "a rogue AI starts frying the local grid overhead",
+      "a group of street punks demands an entry toll",
+      "a faulty terminal leaks high-voltage plasma lines",
+      "a silent gas line begins flooding the ventilation shaft",
+      "an automated laser defense turret grid powers on",
+      "a cyber-hacker squad starts siphoning your neuro-credits",
+      "the emergency fire suppression system locks the doors",
+      "an unstable overload reactor core begins venting radiation",
+      "a tracking trace from the corporate network targets your IP",
+      "a rival nomad smuggler points a charged plasma rifle",
+      "a local security grid sound alarm alerts the guards",
+      "a malfunctioning cleaning droids charges you at high speed",
+      "a bio-toxin mist leaks from damaged cryo-containment tanks",
+      "magnetic field pulses scramble your cybernetic gear",
+      "a tactical corporate hit squad breaches the windows",
+      "a heavy cargo lift falls down the elevator shaft",
+      "the floor panels collapse revealing live copper cables",
+      "an atmospheric depressurization breach vents the room",
+      "a rogue defense matrix mainframe initiates a virus upload"
+    ],
+    rewards: [
+      "you find an encrypted datapad",
+      "a sympathetic decker beams you a temporary power boost",
+      "you discover a hidden access ventilation shaft",
+      "a cache of unregistered credit chips sparkles under a floorboard",
+      "a medical nanite injector sits unused in a wall cabinet",
+      "you salvage a functioning security bypass card key",
+      "a local terminal lets you download corporate server data maps",
+      "you recover a discarded weapon stabilizer mod",
+      "an unlocked cargo locker contains emergency survival gear",
+      "you splice a power line for a shield recharge block",
+      "a friendly merchant drone drops a supply crate",
+      "you bypass a lock to find a prototype micro-battery",
+      "an abandoned terminal yields valuable intelligence intel",
+      "you recover an overclocked cooling cell from a server",
+      "a corporate safe yields confidential bearer bonds",
+      "you salvage rare raw alloys from a broken drone chassis",
+      "a hidden wall compartment contains emergency stimpacks",
+      "you patch into a satellite feed to reveal the path ahead",
+      "a black-market cache contains illegal software mods",
+      "you find a discarded cyberdeck containing clean data logs"
+    ],
     actions: [
       { text: "Rip open the magnetic locks of the {location} using brute force", statType: "strength", difficulty: 12 },
       { text: "Attempt to slip past the {hazard} undetected", statType: "agility", difficulty: 13 },
@@ -53,9 +116,72 @@ const NARRATIVE_POOLS = {
     ]
   },
   "🏰 Eldoria": {
-    locations: ["a crumbling obsidian tower balcony", "a moss-covered druid sanctuary", "the damp underground catacombs", "a flickering tavern filled with mercenaries", "a clearing next to a sleeping stone golem"],
-    hazards: ["a swarm of shadow-imps descends from the rafters", "the stone floor begins collapsing into a spiked pit", "a magical ward triggers a localized fire-storm", "an armored skeletal guard draws its rusted claymore"],
-    rewards: ["a glowing mana crystal hums in the corner", "you spot an unmapped escape tunnel behind a tapestry", "a fountain of clear water restores your focus"],
+    locations: [
+      "a crumbling obsidian tower balcony",
+      "a moss-covered druid sanctuary",
+      "the damp underground catacombs",
+      "a flickering tavern filled with mercenaries",
+      "a clearing next to a sleeping stone golem",
+      "a glowing crystal cave with whispering walls",
+      "the ancient library of the arch-mages",
+      "a creaking wooden rope bridge over a lava gorge",
+      "the throne room of a long-dead elven king",
+      "a fog-shrouded mystical graveyard",
+      "an old alchemical laboratory full of bubbling flasks",
+      "a forgotten shrine dedicated to the goddess of dawn",
+      "a dark iron dwarf forge humming with heat",
+      "a secret chamber behind a waterfall cavern",
+      "a grand vaulted cathedral lit by blue fire",
+      "an overgrown maze of thorny rose brambles",
+      "the nesting grounds of a celestial griffin",
+      "a sun-dappled fairy grove smelling of honey",
+      "a dark crypt filled with stone sarcophagi",
+      "the high bell-tower overlooking the valley"
+    ],
+    hazards: [
+      "a swarm of shadow-imps descends from the rafters",
+      "the stone floor begins collapsing into a spiked pit",
+      "a magical ward triggers a localized fire-storm",
+      "an armored skeletal guard draws its rusted claymore",
+      "thick poisonous vines lash out from the walls",
+      "a chilling wave of absolute zero ice frost sweeps the floor",
+      "a stone gargoyle comes to life and screeches loudly",
+      "a suffocating curse starts draining your life force",
+      "hidden wall darts shoot from tiny gaps in the brickwork",
+      "a spectral banshee emerges wailing a death song",
+      "a sudden earthquake shakes loose heavy ceiling columns",
+      "a pool of acidic sludge rises rapidly around you",
+      "the magic runes on the wall begin a detonation sequence",
+      "a rogue wild magic surge distorts the local gravity",
+      "a cloud of sleep-inducing spore gas fills the room",
+      "a giant arachnid drops from a sticky web above",
+      "a curse of blindness darkens the torchlights",
+      "ancient iron blades swing across the corridor",
+      "a pack of rabid wolves breaches the sanctuary doors",
+      "a corrupt wizard's eye watches you, casting spell bolts"
+    ],
+    rewards: [
+      "a glowing mana crystal hums in the corner",
+      "you spot an unmapped escape tunnel behind a tapestry",
+      "a fountain of clear water restores your focus",
+      "a velvet pouch contains rare emerald gems",
+      "a decaying spellbook contains readable rune logs",
+      "you discover a chest containing elven steel chain",
+      "a hidden wall cavity stores holy blessing water",
+      "you find a forgotten relic of the silver hand knights",
+      "a glowing herb grows in a patch of sacred soil",
+      "you decode an old map pointing to treasure hoards",
+      "a friendly forest sprite leaves a basket of berries",
+      "you salvage a golden chalice from the ancient dust",
+      "a statue's glowing eye is a valuable ruby orb",
+      "you find a chest of dwarven forged steel bars",
+      "a lockbox contains dragon scale leather scrap",
+      "you recover a vial of shimmering stardust oil",
+      "a divine pedestal grants a temporary protection blessing",
+      "you locate a smuggler's hidden cache under a flagstone",
+      "a mysterious relic grants you visions of paths",
+      "you find a pouch of silver coins and pristine herbs"
+    ],
     actions: [
       { text: "Smash through the magical barriers in the {location} with physical might", statType: "strength", difficulty: 13 },
       { text: "Evade the {hazard} by diving behind the stonework of the {location}", statType: "agility", difficulty: 11 },
@@ -64,9 +190,72 @@ const NARRATIVE_POOLS = {
     ]
   },
   "☄️ Sector-9": {
-    locations: ["the claustrophobic airlock chamber", "the dark, echoing main engine room", "the hydroponics bay overgrown with alien flora", "the crew quarters showing signs of a violent struggle", "the command bridge looking out into a cosmic rift"],
-    hazards: ["the oxygen scrubbers suddenly fail, dropping pressure", "a mutated xenomorph lifeform screeches in the vents", "an exposed plasma fuel line bursts into flames", "the artificial gravity matrix flips completely upside down"],
-    rewards: ["a pristine emergency medkit rests in a wall locker", "the auxiliary terminal reveals a maintenance schematic", "a heavy steel blast door seals off the danger just in time"],
+    locations: [
+      "the claustrophobic airlock chamber",
+      "the dark, echoing main engine room",
+      "the hydroponics bay overgrown with alien flora",
+      "the crew quarters showing signs of a violent struggle",
+      "the command bridge looking out into a cosmic rift",
+      "a high-radiation reactor core catwalk",
+      "the cold metallic medical laboratory ward",
+      "a chaotic garbage compactor room closing in",
+      "the long cargo bay holding rows of locked crates",
+      "an external hull maintenance platform in open space",
+      "the high-security databank archive core",
+      "a dark ventilation network ventilation tunnel",
+      "the forward scanning radar dome platform",
+      "an orbital defense turret control station",
+      "the debris field of a destroyed escape pod capsule",
+      "the shuttle hangar bay littered with broken wings",
+      "the central life support scrubbers room",
+      "a narrow maintenance duct behind the warp engine",
+      "the gravity generator control tower balcony",
+      "the station's observation lounge looking at stars"
+    ],
+    hazards: [
+      "the oxygen scrubbers suddenly fail, dropping pressure",
+      "a mutated xenomorph lifeform screeches in the vents",
+      "an exposed plasma fuel line bursts into flames",
+      "the artificial gravity matrix flips completely upside down",
+      "a meteoroid shower strikes the external station hull",
+      "a localized radiation leak sounds the sirens",
+      "the automated defense turrets mistake you for an intruder",
+      "a blast door seals closed, threatening to crush you",
+      "corrosive alien slime begins eating through your boots",
+      "a high-frequency sonar alarm scrambles your sensors",
+      "a rogue worker drone goes berserk wielding drills",
+      "magnetic storm pulses disable your light sources",
+      "a superheated steam vent bursts directly in your path",
+      "an explosive decompression hazard rips the wall plating",
+      "a rogue nanite swarm starts dissolving local metal panels",
+      "a high-voltage power relay short circuits overhead",
+      "the primary engine cooling system starts a fire purge",
+      "creeping crystalline alien growths cage you in",
+      "the floor panels collapse into the engine exhaust shaft",
+      "a cyber security lockdown protocol floods the room with gas"
+    ],
+    rewards: [
+      "a pristine emergency medkit rests in a wall locker",
+      "the auxiliary terminal reveals a maintenance schematic",
+      "a heavy steel blast door seals off the danger just in time",
+      "you find a spare fuel canister containing deuterium gas",
+      "a metal drawer holds spare hyperdrive parts",
+      "you download clean navigation star charts from a console",
+      "a security passcard keycard sits in a dead officer's pocket",
+      "you salvage clean titanium plating panels from a hatch",
+      "an abandoned crate holds nutrient paste bars and tech gold",
+      "you find a working laser torch welding gun",
+      "a backup generator lets you recharge your shields",
+      "you recover a container of glowing exotic matter particles",
+      "an engineer's toolbox contains useful repair tools",
+      "you salvage a functioning comms card from the console",
+      "a wall safe contains space credits and chips",
+      "you find an undamaged thermal blanketing suite",
+      "a maintenance drone leaves a cargo crate of scrap",
+      "you splice the mainframe to reveal nearby rooms",
+      "a research desk contains prototype laser component blueprints",
+      "you find a stash of medical stimpacks in a drawer"
+    ],
     actions: [
       { text: "Force the bulkhead gears of the {location} open with your bare hands", statType: "strength", difficulty: 14 },
       { text: "Scramble into the service conduits of the {location} to dodge the {hazard}", statType: "agility", difficulty: 12 },
@@ -386,8 +575,12 @@ export default function InfiniteQuest() {
   const handleEventAction = (choice: Choice) => {
     if (!selectedSetting || isTransitioning) return;
     setIsTransitioning(true);
+    
     setTimeout(() => {
       executeEventActionLogic(choice);
+    }, 425);
+    
+    setTimeout(() => {
       setIsTransitioning(false);
     }, 850);
   };
@@ -601,6 +794,9 @@ export default function InfiniteQuest() {
     setIsTransitioning(true);
     setTimeout(() => {
       executeActionLogic(choice);
+    }, 425);
+    
+    setTimeout(() => {
       setIsTransitioning(false);
     }, 850);
   };
@@ -827,39 +1023,7 @@ export default function InfiniteQuest() {
     const isGameOver = currentChoices.length === 0;
     const isBossActive = currentChoices.length > 0 && BOSS_POOL[selectedSetting]?.actions.some(a => a.text === currentChoices[0].text);
     const isRestingActive = currentChoices.length > 0 && currentChoices.some(c => c.statType === 'rest');
-    const floor = score + 1;
-
-    if (isTransitioning) {
-      return (
-        <svg className="w-full h-full" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="400" height="160" fill="#020617"/>
-          <g style={{ transformOrigin: '200px 80px', animation: 'zoomSpace 0.8s ease-in-out infinite' }}>
-            <line x1="200" y1="80" x2="50" y2="-20" stroke="#a855f7" strokeWidth="2" opacity="0.6"/>
-            <line x1="200" y1="80" x2="350" y2="-20" stroke="#ec4899" strokeWidth="2" opacity="0.6"/>
-            <line x1="200" y1="80" x2="-50" y2="180" stroke="#3b82f6" strokeWidth="2" opacity="0.6"/>
-            <line x1="200" y1="80" x2="450" y2="180" stroke="#06b6d4" strokeWidth="2" opacity="0.6"/>
-            <line x1="200" y1="80" x2="200" y2="-40" stroke="#a855f7" strokeWidth="1.5" opacity="0.4"/>
-            <line x1="200" y1="80" x2="200" y2="200" stroke="#3b82f6" strokeWidth="1.5" opacity="0.4"/>
-            <line x1="200" y1="80" x2="-40" y2="80" stroke="#ec4899" strokeWidth="1.5" opacity="0.4"/>
-            <line x1="200" y1="80" x2="440" y2="80" stroke="#06b6d4" strokeWidth="1.5" opacity="0.4"/>
-          </g>
-          <circle cx="200" cy="80" r="10" stroke="#fff" strokeWidth="1.5" opacity="0.8" style={{ animation: 'expandCircle 0.8s ease-out infinite' }}/>
-          <circle cx="200" cy="80" r="30" stroke="#fff" strokeWidth="1" opacity="0.5" style={{ animation: 'expandCircle 0.8s ease-out infinite', animationDelay: '0.2s' }}/>
-          <circle cx="200" cy="80" r="60" stroke="#a855f7" strokeWidth="1" opacity="0.3" style={{ animation: 'expandCircle 0.8s ease-out infinite', animationDelay: '0.4s' }}/>
-          <text x="50%" y="85" textAnchor="middle" fill="#fff" fontSize="10" fontFamily="monospace" fontWeight="bold" letterSpacing="4" style={{ animation: 'textPulse 0.4s infinite' }}>DEVOLVING TO FLOOR 0{floor}...</text>
-          <style>{`
-            @keyframes zoomSpace {
-              0% { transform: scale(0.3); opacity: 0.2; }
-              100% { transform: scale(1.5); opacity: 1; }
-            }
-            @keyframes expandCircle {
-              0% { r: 5px; opacity: 1; stroke-width: 2px; }
-              100% { r: 120px; opacity: 0; stroke-width: 0.5px; }
-            }
-            @keyframes textPulse {
-              0%, 100% { opacity: 0.6; }
-              50% { opacity: 1; }
-            }
+    const floor = score + 1;   }
           `}</style>
         </svg>
       );
@@ -1339,7 +1503,44 @@ export default function InfiniteQuest() {
                 <div className="bg-slate-900 border border-slate-800 rounded-xl min-h-[420px] flex flex-col justify-between shadow-lg overflow-hidden">
                   {/* Story graphic banner */}
                   <div className="w-full h-40 bg-slate-950 border-b border-slate-800 relative overflow-hidden flex items-center justify-center">
-                    {renderStoryGraphic()}
+                    <style>{`
+                      @keyframes roomFlyForward {
+                        0% { transform: scale(1); opacity: 1; filter: blur(0px); }
+                        45% { transform: scale(2.2); opacity: 0.1; filter: blur(2px); }
+                        50% { transform: scale(0.2); opacity: 0; filter: blur(4px); }
+                        100% { transform: scale(1); opacity: 1; filter: blur(0px); }
+                      }
+                      .room-fly-forward {
+                        animation: roomFlyForward 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+                        transform-origin: center center;
+                      }
+                      @keyframes warpSpeed {
+                        0% { transform: scale(0.1); opacity: 0; }
+                        50% { opacity: 0.8; }
+                        100% { transform: scale(1.8); opacity: 0; }
+                      }
+                      .speed-line {
+                        animation: warpSpeed 0.4s linear infinite;
+                        transform-origin: 200px 80px;
+                      }
+                    `}</style>
+                    <div className={`w-full h-full ${isTransitioning ? "room-fly-forward" : ""}`}>
+                      {renderStoryGraphic()}
+                    </div>
+                    {isTransitioning && (
+                      <div className="absolute inset-0 pointer-events-none z-10">
+                        <svg className="w-full h-full" viewBox="0 0 400 160" fill="none">
+                          <g style={{ transformOrigin: '200px 80px' }}>
+                            <line x1="200" y1="80" x2="0" y2="0" stroke="#a855f7" strokeWidth="2" className="speed-line" style={{ animationDelay: '0s' }}/>
+                            <line x1="200" y1="80" x2="400" y2="0" stroke="#ec4899" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.1s' }}/>
+                            <line x1="200" y1="80" x2="0" y2="160" stroke="#3b82f6" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.2s' }}/>
+                            <line x1="200" y1="80" x2="400" y2="160" stroke="#06b6d4" strokeWidth="2" className="speed-line" style={{ animationDelay: '0.15s' }}/>
+                            <line x1="200" y1="80" x2="200" y2="-40" stroke="#fff" strokeWidth="1" className="speed-line" style={{ animationDelay: '0.05s' }}/>
+                            <line x1="200" y1="80" x2="200" y2="200" stroke="#fff" strokeWidth="1" className="speed-line" style={{ animationDelay: '0.25s' }}/>
+                          </g>
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Story text display */}
@@ -1375,20 +1576,7 @@ export default function InfiniteQuest() {
                             ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300' 
                             : 'border-slate-800 font-mono text-[9px] flex gap-1.5 items-center'
                         }`}>
-                          {choice.statType === 'rest' ? 'HEAL / REST' : (
-                            <>
-                              <span>{choice.statType} (Diff: {choice.difficulty})</span>
-                              {choice.rewardMult && choice.rewardMult > 1.5 && (
-                                <span className="text-red-400 font-black animate-pulse">🔥 HARD [2.0x Gold]</span>
-                              )}
-                              {choice.rewardMult && choice.rewardMult < 0.8 && (
-                                <span className="text-emerald-400 font-semibold">🟢 EASY [0.6x Gold]</span>
-                              )}
-                              {(!choice.rewardMult || (choice.rewardMult >= 0.8 && choice.rewardMult <= 1.5)) && (
-                                <span className="text-blue-400 font-medium">⚡ MED [1.0x Gold]</span>
-                              )}
-                            </>
-                          )}
+                          {choice.statType === 'rest' ? 'HEAL / REST' : `${choice.statType} (Diff: ${choice.difficulty})`}
                         </span>
                       </button>
                     ))
